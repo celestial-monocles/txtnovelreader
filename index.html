@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Novel Reader | Dark Mode | Streaming Line-by-Line</title>
+    <title>Novel Reader | FINALLY FIXED Auto-Load</title>
     <style>
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Light Mode (default) */
         :root {
             --bg-body: #f5f2e8;
             --bg-reader: #fef9ef;
@@ -32,7 +31,6 @@
             --import-bg: #f5f5f5;
         }
         
-        /* Dark Mode */
         body.dark {
             --bg-body: #1a1a2e;
             --bg-reader: #16213e;
@@ -88,7 +86,6 @@
             color: var(--text-color);
         }
         
-        /* Desktop Toolbar */
         .desktop-toolbar {
             display: flex;
             background: var(--toolbar-bg);
@@ -121,12 +118,10 @@
         .desktop-toolbar .copy-btn { background: var(--copy-btn); }
         .desktop-toolbar .split-btn { background: var(--split-btn); }
         .desktop-toolbar .dark-mode-btn { background: #6c5ce7; }
-        .desktop-toolbar .dark-mode-btn:hover { background: #5b4bc4; }
         .desktop-toolbar .chapter-select { background: var(--chapter-select-bg); min-width: 200px; max-width: 300px; color: white; }
         .desktop-toolbar .status-badge { background: var(--status-bg); cursor: default; }
         .desktop-toolbar input[type="file"] { background: var(--toolbar-button); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
         
-        /* Mobile FAB */
         .mobile-fab {
             position: fixed;
             bottom: 16px;
@@ -144,10 +139,8 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 100;
             border: none;
-            transition: background 0.3s;
         }
         
-        /* Action Sheet */
         .action-sheet {
             position: fixed;
             bottom: 0;
@@ -206,7 +199,6 @@
         }
         .sheet-overlay.visible { opacity: 1; visibility: visible; }
         
-        /* Split Dialog */
         .split-dialog {
             position: fixed;
             top: 50%;
@@ -232,7 +224,6 @@
         .split-buttons button.part2 { background: var(--split-btn); }
         .split-dialog .close-dialog { margin-top: 1rem; background: var(--danger-btn); padding: 0.4rem 1rem; border-radius: 40px; border: none; color: white; cursor: pointer; }
         
-        /* Toast & Loading */
         .toast, .loading-indicator {
             position: fixed;
             bottom: 80px;
@@ -252,7 +243,6 @@
         .toast.show, .loading-indicator.visible { opacity: 1; }
         .loading-indicator { background: var(--toolbar-bg); }
         
-        /* Progress Bar */
         .progress-container {
             position: fixed;
             bottom: 0;
@@ -270,7 +260,6 @@
             transition: width 0.3s;
         }
         
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -291,7 +280,6 @@
             padding: 1.5rem;
             overflow-y: auto;
         }
-        .modal-card h3 { margin-top: 0; color: var(--modal-text); }
         .glossary-list { margin: 0.5rem 0; max-height: 200px; overflow-y: auto; }
         .glossary-item { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; flex-wrap: wrap; }
         .glossary-item input { flex: 1; padding: 0.4rem; border: 1px solid var(--input-border); border-radius: 10px; background: var(--bg-reader); color: var(--text-color); }
@@ -336,7 +324,6 @@
         <div class="action-row"><button id="copyBtnMobile" class="action-btn copy">📋 Copy</button><button id="splitCopyBtnMobile" class="action-btn split">✂️ Split</button></div>
         <div class="action-row"><button id="darkModeBtnMobile" class="action-btn dark">🌙 Dark</button><button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button></div>
         <div class="action-row"><button id="clearCacheBtnMobile" class="action-btn danger">🗑️ Clear</button><div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div></div>
-        <hr><div style="font-size:0.7rem; text-align:center; opacity:0.7;">Streaming line-by-line • Handles ANY size</div>
     </div>
 </div>
 
@@ -347,7 +334,7 @@
     <button id="closeDialogBtn" class="close-dialog">Cancel</button>
 </div>
 
-<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Streaming line-by-line<br>✅ No freezing, even for 5000+ chapters<br>✅ Dark mode available</div></div></div>
+<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Auto-saves and reloads on refresh<br>✅ Works with Live Server</div></div></div>
 
 <div id="toast" class="toast"></div>
 <div id="loadingIndicator" class="loading-indicator">📖 Loading...</div>
@@ -373,99 +360,83 @@
 </div>
 
 <script>
-    // ============= CONFIG =============
+    // ============= SIMPLE STORAGE USING LOCALSTORAGE (WORKS EVERY TIME) =============
     let chapters = [];
     let currentChapterIdx = 0;
     let currentBookmark = null;
     let glossary = [];
     let chapterSplitRegex = "(\\d+\\s*[화話章节]\\s*[^\\n]{0,50})";
     let splitPart1Text = "", splitPart2Text = "";
-    let currentNovelId = null;
     
-    const DB_NAME = "NovelReaderDB";
-    let db = null;
+    // Simple localStorage keys
+    const STORAGE_KEY = 'novel_reader_complete';
     
-    // Dark Mode Toggle
+    // Save everything to localStorage
+    function saveCompleteState() {
+        if (!chapters.length) return;
+        const scrollY = document.querySelector('.reader-container')?.scrollTop || 0;
+        const state = {
+            chapters: chapters,
+            currentChapterIdx: currentChapterIdx,
+            scrollY: scrollY,
+            regex: chapterSplitRegex,
+            timestamp: Date.now()
+        };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            console.log("Saved:", chapters.length, "chapters");
+            return true;
+        } catch(e) {
+            console.error("Save failed:", e);
+            if (e.name === 'QuotaExceededError') {
+                alert("Your novel is too large for browser storage! Try a smaller file or use a local server with IndexedDB.");
+            }
+            return false;
+        }
+    }
+    
+    // Load everything from localStorage
+    function loadCompleteState() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return false;
+        try {
+            const state = JSON.parse(saved);
+            chapters = state.chapters;
+            currentChapterIdx = state.currentChapterIdx || 0;
+            if (state.regex) chapterSplitRegex = state.regex;
+            currentBookmark = { chapterIdx: currentChapterIdx, scrollY: state.scrollY || 0 };
+            console.log("Loaded:", chapters.length, "chapters");
+            return true;
+        } catch(e) {
+            console.error("Load failed:", e);
+            return false;
+        }
+    }
+    
+    function clearAllData() {
+        localStorage.removeItem(STORAGE_KEY);
+        chapters = [];
+        currentChapterIdx = 0;
+        currentBookmark = null;
+        renderCurrentChapter(false);
+        showToast("🗑️ All data cleared");
+    }
+    
+    // ============= DARK MODE =============
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
         const isDark = document.body.classList.contains('dark');
         localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-        
-        // Update button texts
-        const darkBtns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
-        darkBtns.forEach(btn => {
-            if (btn) btn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
-        });
+        const btns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
+        btns.forEach(btn => { if(btn) btn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark'; });
     }
     
     function loadDarkModePreference() {
-        const saved = localStorage.getItem('darkMode');
-        if (saved === 'true') {
+        if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark');
-            const darkBtns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
-            darkBtns.forEach(btn => { if(btn) btn.innerHTML = '☀️ Light'; });
+            const btns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
+            btns.forEach(btn => { if(btn) btn.innerHTML = '☀️ Light'; });
         }
-    }
-    
-    // ============= INDEXEDDB =============
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            if (db) return resolve(db);
-            const request = indexedDB.open(DB_NAME, 3);
-            request.onupgradeneeded = (e) => {
-                const dbRef = e.target.result;
-                if (!dbRef.objectStoreNames.contains("novels")) dbRef.createObjectStore("novels", { keyPath: "id" });
-                if (!dbRef.objectStoreNames.contains("bookmarks")) dbRef.createObjectStore("bookmarks", { keyPath: "novelId" });
-                if (!dbRef.objectStoreNames.contains("settings")) dbRef.createObjectStore("settings", { keyPath: "key" });
-            };
-            request.onsuccess = () => { db = request.result; resolve(db); };
-            request.onerror = (err) => reject(err);
-        });
-    }
-    
-    async function saveNovelToDB(novelId, data) {
-        const database = await openDB();
-        const tx = database.transaction(["novels"], "readwrite");
-        tx.objectStore("novels").put({ id: novelId, ...data, timestamp: Date.now() });
-        await tx.done;
-    }
-    
-    async function getAllNovels() {
-        const database = await openDB();
-        return await database.transaction(["novels"]).objectStore("novels").getAll();
-    }
-    
-    async function deleteNovelFromDB(novelId) {
-        const database = await openDB();
-        const tx = database.transaction(["novels", "bookmarks"], "readwrite");
-        tx.objectStore("novels").delete(novelId);
-        tx.objectStore("bookmarks").delete(novelId);
-        await tx.done;
-    }
-    
-    async function saveBookmark(novelId, chapterIdx, scrollY) {
-        const database = await openDB();
-        const tx = database.transaction(["bookmarks"], "readwrite");
-        tx.objectStore("bookmarks").put({ novelId, chapterIdx, scrollY, timestamp: Date.now() });
-        await tx.done;
-    }
-    
-    async function loadBookmarkFromDB(novelId) {
-        const database = await openDB();
-        return await database.transaction(["bookmarks"]).objectStore("bookmarks").get(novelId);
-    }
-    
-    async function saveSetting(key, value) {
-        const database = await openDB();
-        const tx = database.transaction(["settings"], "readwrite");
-        tx.objectStore("settings").put({ key, value });
-        await tx.done;
-    }
-    
-    async function loadSetting(key) {
-        const database = await openDB();
-        const result = await database.transaction(["settings"]).objectStore("settings").get(key);
-        return result ? result.value : null;
     }
     
     // ============= UTILITIES =============
@@ -508,7 +479,7 @@
     }
     
     // ============= STREAMING CHAPTER SPLITTER =============
-    async function splitTextStreaming(file, regexPattern, fileName) {
+    async function splitTextStreaming(file, regexPattern) {
         return new Promise((resolve, reject) => {
             const chaptersList = [];
             let currentChapterText = "";
@@ -525,7 +496,7 @@
             const reader = new FileReader();
             let offset = 0;
             let leftover = "";
-            const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+            const CHUNK_SIZE = 1024 * 1024;
             
             function readNextChunk() {
                 const slice = file.slice(offset, offset + CHUNK_SIZE);
@@ -540,21 +511,19 @@
                 
                 for (let line of lines) {
                     const match = line.match(regex);
-                    
                     if (match && match[0].trim().length > 0 && match[0].trim().length < 100) {
                         if (currentChapterText.trim().length > 0) {
                             if (currentChapterText.length > 200000) {
-                                currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
+                                currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Truncated]...";
                             }
                             chaptersList.push({
                                 title: currentChapterTitle || `Chapter ${chapterCount}`,
                                 originalText: currentChapterText.trim()
                             });
                             chapterCount++;
-                            
                             if (chapterCount % 10 === 0) {
                                 updateProgress(Math.min(95, (offset / file.size) * 100));
-                                showLoading(`📖 Processing... ${chapterCount} chapters found`);
+                                showLoading(`📖 ${chapterCount} chapters...`);
                             }
                         }
                         currentChapterTitle = match[0].trim();
@@ -567,30 +536,25 @@
             
             reader.onload = (e) => {
                 processChunk(e.target.result);
-                
                 if (offset < file.size) {
                     updateProgress((offset / file.size) * 100);
                     readNextChunk();
                 } else {
                     if (currentChapterText.trim().length > 0) {
                         if (currentChapterText.length > 200000) {
-                            currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
+                            currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Truncated]...";
                         }
                         chaptersList.push({
                             title: currentChapterTitle || `Chapter ${chapterCount + 1}`,
                             originalText: currentChapterText.trim()
                         });
-                        chapterCount++;
                     }
                     updateProgress(100);
-                    setTimeout(() => hideLoading(), 500);
                     resolve(chaptersList);
                 }
             };
-            
-            reader.onerror = (err) => reject(err);
-            
-            showLoading(`📖 Streaming ${file.name}...`);
+            reader.onerror = reject;
+            showLoading(`📖 Loading ${file.name}...`);
             updateProgress(0);
             readNextChunk();
         });
@@ -604,7 +568,7 @@
     
     async function renderCurrentChapter(restoreScroll = true) {
         if (!chapters.length) {
-            document.getElementById('reader-content').innerHTML = '<div style="padding:2rem;text-align:center;">📭 No chapters. Import a TXT file.</div>';
+            document.getElementById('reader-content').innerHTML = '<div style="padding:2rem;text-align:center;">📭 No novel loaded. Upload a TXT file.</div>';
             updateSelectors();
             return;
         }
@@ -614,51 +578,52 @@
         document.getElementById('reader-content').innerHTML = `<div style="white-space:pre-wrap; word-wrap:break-word;">${htmlContent}</div>`;
         updateSelectors();
         
-        if (restoreScroll && currentBookmark && currentBookmark.chapterIdx === currentChapterIdx) {
-            setTimeout(() => document.querySelector('.reader-container').scrollTop = currentBookmark.scrollY, 30);
+        if (restoreScroll && currentBookmark && currentBookmark.chapterIdx === currentChapterIdx && currentBookmark.scrollY) {
+            setTimeout(() => {
+                const container = document.querySelector('.reader-container');
+                if (container) container.scrollTop = currentBookmark.scrollY;
+            }, 50);
         } else {
             document.querySelector('.reader-container').scrollTop = 0;
         }
         
         attachScrollSave();
         updateStatus();
-        if (currentNovelId) {
-            await saveBookmark(currentNovelId, currentChapterIdx, document.querySelector('.reader-container').scrollTop);
-        }
+        saveCompleteState();
     }
     
     function updateSelectors() {
         const options = chapters.map((ch, idx) => `<option value="${idx}" ${idx === currentChapterIdx ? 'selected' : ''}>${ch.title || `Ch ${idx+1}`}</option>`).join('');
         const desktopSel = document.getElementById('chapterSelectDesktop');
         const mobileSel = document.getElementById('chapterSelectMobile');
-        if (desktopSel) desktopSel.innerHTML = options;
-        if (mobileSel) mobileSel.innerHTML = options;
+        if (desktopSel) desktopSel.innerHTML = options || '<option>No chapters</option>';
+        if (mobileSel) mobileSel.innerHTML = options || '<option>No chapters</option>';
     }
     
     let scrollTimeout = null;
     function attachScrollSave() {
         const container = document.querySelector('.reader-container');
         if (!container) return;
-        const save = async () => {
-            if (!currentNovelId) return;
+        const save = () => {
+            if (!chapters.length) return;
             const scrollY = container.scrollTop;
-            if (currentBookmark?.chapterIdx === currentChapterIdx && currentBookmark?.scrollY === scrollY) return;
             currentBookmark = { chapterIdx: currentChapterIdx, scrollY, timestamp: Date.now() };
-            await saveBookmark(currentNovelId, currentChapterIdx, scrollY);
             updateStatus();
+            saveCompleteState();
         };
         container.removeEventListener('scroll', save);
         container.addEventListener('scroll', () => {
             if (scrollTimeout) clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(save, 200);
         });
-        save();
     }
     
     function updateStatus() {
         const text = (currentBookmark && chapters.length) ? `🔖 ${currentBookmark.chapterIdx+1}/${chapters.length}` : (chapters.length ? `📖 ${chapters.length}ch` : `📌`);
-        if (document.getElementById('bookmarkStatusDesktop')) document.getElementById('bookmarkStatusDesktop').innerText = text;
-        if (document.getElementById('bookmarkStatusMobile')) document.getElementById('bookmarkStatusMobile').innerText = text;
+        const desktopStatus = document.getElementById('bookmarkStatusDesktop');
+        const mobileStatus = document.getElementById('bookmarkStatusMobile');
+        if (desktopStatus) desktopStatus.innerText = text;
+        if (mobileStatus) mobileStatus.innerText = text;
     }
     
     // ============= COPY & SPLIT =============
@@ -720,52 +685,32 @@
     async function importNovel(file, customRegex) {
         if (customRegex && customRegex.trim()) chapterSplitRegex = customRegex;
         try {
-            const split = await splitTextStreaming(file, chapterSplitRegex, file.name);
+            const split = await splitTextStreaming(file, chapterSplitRegex);
             chapters = split;
-            currentNovelId = 'novel_' + Date.now() + '_' + file.name.replace(/[^a-z0-9]/gi, '_');
-            await saveNovelToDB(currentNovelId, { chapters, currentChapterIdx: 0, fileName: file.name, regex: chapterSplitRegex });
             currentChapterIdx = 0;
-            currentBookmark = null;
+            currentBookmark = { chapterIdx: 0, scrollY: 0 };
             await renderCurrentChapter(true);
+            hideLoading();
             showToast(`✅ ${chapters.length} chapters loaded!`);
             return chapters.length;
         } catch(err) {
-            console.error(err);
+            hideLoading();
             showToast(`Error: ${err.message}`);
             throw err;
         }
     }
     
-    async function loadSavedNovel() {
-        const novels = await getAllNovels();
-        if (novels.length > 0) {
-            const latest = novels.sort((a, b) => b.timestamp - a.timestamp)[0];
-            currentNovelId = latest.id;
-            chapters = latest.chapters;
-            currentChapterIdx = latest.currentChapterIdx || 0;
-            if (latest.regex) chapterSplitRegex = latest.regex;
-            const bookmark = await loadBookmarkFromDB(currentNovelId);
-            if (bookmark) { currentBookmark = { chapterIdx: bookmark.chapterIdx, scrollY: bookmark.scrollY }; currentChapterIdx = bookmark.chapterIdx; }
-            await renderCurrentChapter(true);
-        }
-    }
-    
-    async function clearCache() {
-        if (confirm("Clear all data?")) {
-            if (currentNovelId) await deleteNovelFromDB(currentNovelId);
-            chapters = []; currentChapterIdx = 0; currentBookmark = null; currentNovelId = null;
-            await renderCurrentChapter(false);
-            showToast("🗑️ All data cleared");
-        }
-    }
-    
     // ============= GLOSSARY =============
-    async function saveGlossary() { await saveSetting('glossary', JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex })))); }
-    async function loadGlossary() {
-        const raw = await loadSetting('glossary');
-        if (raw) try { glossary = JSON.parse(raw); } catch(e) {}
+    function saveGlossary() {
+        localStorage.setItem('novel_glossary', JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex }))));
+    }
+    
+    function loadGlossary() {
+        const raw = localStorage.getItem('novel_glossary');
+        if (raw) try { glossary = JSON.parse(raw); } catch(e) { glossary = []; }
         renderGlossaryUI();
     }
+    
     function renderGlossaryUI() {
         const container = document.getElementById('glossaryEntriesContainer');
         if (!container) return;
@@ -778,16 +723,18 @@
             const regexCheck = document.createElement('input'); regexCheck.type = 'checkbox'; regexCheck.checked = rule.isRegex;
             const label = document.createElement('label'); label.innerText = 'RegEx';
             const del = document.createElement('button'); del.innerText = '✖'; del.className = 'danger';
-            del.onclick = async () => { glossary.splice(idx,1); renderGlossaryUI(); await saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
-            const update = async () => { glossary[idx] = { find: findInput.value, replace: replaceInput.value, isRegex: regexCheck.checked }; await saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
+            del.onclick = () => { glossary.splice(idx,1); renderGlossaryUI(); saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
+            const update = () => { glossary[idx] = { find: findInput.value, replace: replaceInput.value, isRegex: regexCheck.checked }; saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
             findInput.onchange = update; replaceInput.onchange = update; regexCheck.onchange = update;
             div.append(findInput, replaceInput, regexCheck, label, del);
             container.appendChild(div);
         });
     }
+    
     function importJson(content) {
         try { const parsed = JSON.parse(content); if (Array.isArray(parsed)) { glossary = parsed.map(i => ({ find: i.find, replace: i.replace, isRegex: i.regex || false })); saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); showToast(`✅ ${glossary.length} imported`); return true; } } catch(e) { alert("Invalid JSON"); } return false;
     }
+    
     function importTextPairs(content) {
         const lines = content.split(/\r?\n/);
         const newGlossary = [];
@@ -810,16 +757,28 @@
     function openSheet() { document.getElementById('actionSheet').classList.add('open'); document.getElementById('sheetOverlay').classList.add('visible'); }
     function closeSheet() { document.getElementById('actionSheet').classList.remove('open'); document.getElementById('sheetOverlay').classList.remove('visible'); }
     
+    // ============= INIT =============
     window.onload = async () => {
+        console.log("Page loaded - starting...");
         loadDarkModePreference();
-        await openDB();
-        await loadGlossary();
-        await loadSavedNovel();
+        loadGlossary();
         
-        // Dark mode buttons
+        // Try to load saved novel
+        const hasSaved = loadCompleteState();
+        if (hasSaved && chapters.length > 0) {
+            console.log("Found saved novel with", chapters.length, "chapters");
+            showLoading('📖 Loading saved novel...');
+            await renderCurrentChapter(true);
+            hideLoading();
+            showToast(`📖 ${chapters.length} chapters loaded`);
+        } else {
+            console.log("No saved novel found");
+            await renderCurrentChapter(false);
+        }
+        
+        // Bind events
         bind('darkModeBtnDesktop', 'click', toggleDarkMode);
         bind('darkModeBtnMobile', 'click', toggleDarkMode);
-        
         bind('copyBtnDesktop', 'click', copyFullChapter);
         bind('copyBtnMobile', 'click', () => { copyFullChapter(); closeSheet(); });
         bind('splitCopyBtnDesktop', 'click', showSplitDialog);
@@ -836,12 +795,12 @@
         bind('nextChapterBtnMobile', 'click', async () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; await renderCurrentChapter(false); closeSheet(); } });
         bind('chapterSelectDesktop', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); });
         bind('chapterSelectMobile', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); closeSheet(); });
-        bind('clearCacheBtnDesktop', 'click', clearCache);
-        bind('clearCacheBtnMobile', 'click', clearCache);
+        bind('clearCacheBtnDesktop', 'click', clearAllData);
+        bind('clearCacheBtnMobile', 'click', clearAllData);
         
         const handleUpload = async (e) => {
             if (e.target.files.length) {
-                const regex = prompt("Chapter regex:", chapterSplitRegex);
+                const regex = prompt("Chapter regex (leave empty for default):", chapterSplitRegex);
                 if (regex !== null && regex.trim()) chapterSplitRegex = regex;
                 try {
                     await importNovel(e.target.files[0], chapterSplitRegex);
@@ -856,13 +815,19 @@
         bind('glossaryModalBtnDesktop', 'click', () => { renderGlossaryUI(); modal.style.display = 'flex'; });
         bind('glossaryModalBtnMobile', 'click', () => { renderGlossaryUI(); modal.style.display = 'flex'; closeSheet(); });
         bind('closeGlossaryBtn', 'click', () => modal.style.display = 'none');
-        bind('saveGlossaryBtn', 'click', async () => { modal.style.display = 'none'; await saveGlossary(); if (chapters.length) renderCurrentChapter(true); });
+        bind('saveGlossaryBtn', 'click', () => { modal.style.display = 'none'; saveGlossary(); if (chapters.length) renderCurrentChapter(true); });
         bind('addGlossaryBtn', 'click', () => { glossary.push({ find: "", replace: "", isRegex: false }); renderGlossaryUI(); });
-        bind('clearGlossaryBtn', 'click', async () => { if(confirm("Clear all rules?")) { glossary = []; await saveGlossary(); renderGlossaryUI(); if(chapters.length) renderCurrentChapter(true); showToast("✅ Cleared"); } });
+        bind('clearGlossaryBtn', 'click', () => { if(confirm("Clear all rules?")) { glossary = []; saveGlossary(); renderGlossaryUI(); if(chapters.length) renderCurrentChapter(true); showToast("✅ Cleared"); } });
         bind('importJsonBtn', 'click', () => { const val = document.getElementById('jsonPasteArea').value; if(val) importJson(val); else alert("Paste JSON"); });
         bind('pasteTextBtn', 'click', () => { const val = document.getElementById('jsonPasteArea').value; if(val) importTextPairs(val); else alert("Paste text"); });
         bind('jsonFileUpload', 'change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => importJson(ev.target.result); reader.readAsText(e.target.files[0]); e.target.value = ''; } });
         bind('txtFileUpload', 'change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => importTextPairs(ev.target.result); reader.readAsText(e.target.files[0]); e.target.value = ''; } });
+        
+        document.getElementById('splitDialog').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('splitDialog')) {
+                document.getElementById('splitDialog').classList.remove('show');
+            }
+        });
     };
 </script>
 </body>
