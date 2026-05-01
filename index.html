@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Novel Reader | FINALLY FIXED Auto-Load</title>
+    <title>Novel Reader | Auto-Load + Position Restore | Works on GitHub Pages</title>
     <style>
         * {
             box-sizing: border-box;
@@ -334,7 +334,7 @@
     <button id="closeDialogBtn" class="close-dialog">Cancel</button>
 </div>
 
-<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Auto-saves and reloads on refresh<br>✅ Works with Live Server</div></div></div>
+<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Auto-caches and reloads on refresh!<br>✅ Remembers your last chapter and scroll position</div></div></div>
 
 <div id="toast" class="toast"></div>
 <div id="loadingIndicator" class="loading-indicator">📖 Loading...</div>
@@ -360,79 +360,127 @@
 </div>
 
 <script>
-    // ============= SIMPLE STORAGE USING LOCALSTORAGE (WORKS EVERY TIME) =============
+    // ============= CONFIG =============
     let chapters = [];
     let currentChapterIdx = 0;
     let currentBookmark = null;
     let glossary = [];
     let chapterSplitRegex = "(\\d+\\s*[화話章节]\\s*[^\\n]{0,50})";
     let splitPart1Text = "", splitPart2Text = "";
+    let currentFileData = null;
     
-    // Simple localStorage keys
-    const STORAGE_KEY = 'novel_reader_complete';
+    // Storage keys
+    const CACHE_PREFIX = 'novelReaderCache_';
+    const BOOKMARK_KEY = 'novelReaderBookmark';
+    const SETTINGS_KEY = 'novelReaderSettings';
+    const GLOSSARY_KEY = 'novelReaderGlossary';
     
-    // Save everything to localStorage
-    function saveCompleteState() {
-        if (!chapters.length) return;
+    // ============= FILE CACHING =============
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(36);
+    }
+    
+    function getCacheKey(fileData) {
+        return CACHE_PREFIX + simpleHash(fileData.name + fileData.size + (fileData.lastModified || ''));
+    }
+    
+    function cacheChapters(fileData, chaptersData, regex) {
+        const cacheKey = getCacheKey(fileData);
+        const cacheData = {
+            fileData: fileData,
+            chapters: chaptersData,
+            regex: regex,
+            timestamp: Date.now()
+        };
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            console.log("Cached:", chaptersData.length, "chapters");
+            return true;
+        } catch(e) {
+            console.warn("Cache failed (file too large):", e);
+            return false;
+        }
+    }
+    
+    function getCachedChapters(fileData) {
+        const cacheKey = getCacheKey(fileData);
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) return null;
+        try {
+            const data = JSON.parse(cached);
+            if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                return data;
+            }
+        } catch(e) {}
+        return null;
+    }
+    
+    // ============= BOOKMARK (position persistence) =============
+    function saveBookmark() {
+        if (!chapters.length || !currentFileData) return;
         const scrollY = document.querySelector('.reader-container')?.scrollTop || 0;
-        const state = {
-            chapters: chapters,
-            currentChapterIdx: currentChapterIdx,
+        const bookmark = {
+            fileName: currentFileData.name,
+            fileSize: currentFileData.size,
+            fileLastModified: currentFileData.lastModified,
+            chapterIdx: currentChapterIdx,
             scrollY: scrollY,
             regex: chapterSplitRegex,
             timestamp: Date.now()
         };
+        localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmark));
+        updateStatus();
+        console.log("Bookmark saved:", currentChapterIdx, "scroll:", scrollY);
+    }
+    
+    function restorePositionFromBookmark() {
+        const saved = localStorage.getItem(BOOKMARK_KEY);
+        if (!saved || !currentFileData || !chapters.length) return false;
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            console.log("Saved:", chapters.length, "chapters");
-            return true;
-        } catch(e) {
-            console.error("Save failed:", e);
-            if (e.name === 'QuotaExceededError') {
-                alert("Your novel is too large for browser storage! Try a smaller file or use a local server with IndexedDB.");
+            const bookmark = JSON.parse(saved);
+            // Check if bookmark matches current file
+            if (bookmark.fileName === currentFileData.name && 
+                bookmark.fileSize === currentFileData.size) {
+                const targetChapter = Math.min(bookmark.chapterIdx, chapters.length - 1);
+                if (targetChapter !== currentChapterIdx) {
+                    currentChapterIdx = targetChapter;
+                    currentBookmark = { chapterIdx: targetChapter, scrollY: bookmark.scrollY || 0 };
+                    console.log("Position restored to chapter:", targetChapter);
+                    return true;
+                } else if (bookmark.scrollY) {
+                    currentBookmark = { chapterIdx: currentChapterIdx, scrollY: bookmark.scrollY };
+                    console.log("Scroll restored to:", bookmark.scrollY);
+                    return true;
+                }
             }
-            return false;
-        }
+        } catch(e) {}
+        return false;
     }
     
-    // Load everything from localStorage
-    function loadCompleteState() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return false;
-        try {
-            const state = JSON.parse(saved);
-            chapters = state.chapters;
-            currentChapterIdx = state.currentChapterIdx || 0;
-            if (state.regex) chapterSplitRegex = state.regex;
-            currentBookmark = { chapterIdx: currentChapterIdx, scrollY: state.scrollY || 0 };
-            console.log("Loaded:", chapters.length, "chapters");
-            return true;
-        } catch(e) {
-            console.error("Load failed:", e);
-            return false;
-        }
-    }
-    
-    function clearAllData() {
-        localStorage.removeItem(STORAGE_KEY);
-        chapters = [];
-        currentChapterIdx = 0;
-        currentBookmark = null;
-        renderCurrentChapter(false);
-        showToast("🗑️ All data cleared");
+    function clearAllBookmarks() {
+        localStorage.removeItem(BOOKMARK_KEY);
     }
     
     // ============= DARK MODE =============
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
         const isDark = document.body.classList.contains('dark');
-        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+        const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        settings.darkMode = isDark;
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
         const btns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
         btns.forEach(btn => { if(btn) btn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark'; });
     }
     
     function loadDarkModePreference() {
-        if (localStorage.getItem('darkMode') === 'true') {
+        const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        if (settings.darkMode) {
             document.body.classList.add('dark');
             const btns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
             btns.forEach(btn => { if(btn) btn.innerHTML = '☀️ Light'; });
@@ -568,7 +616,7 @@
     
     async function renderCurrentChapter(restoreScroll = true) {
         if (!chapters.length) {
-            document.getElementById('reader-content').innerHTML = '<div style="padding:2rem;text-align:center;">📭 No novel loaded. Upload a TXT file.</div>';
+            document.getElementById('reader-content').innerHTML = '<div style="padding:2rem;text-align:center;">📭 No novel loaded. Upload a TXT file.<br><br>✅ Your novel will be cached and auto-load on refresh!<br>✅ Your reading position will be saved!</div>';
             updateSelectors();
             return;
         }
@@ -582,14 +630,15 @@
             setTimeout(() => {
                 const container = document.querySelector('.reader-container');
                 if (container) container.scrollTop = currentBookmark.scrollY;
-            }, 50);
+                console.log("Scroll restored to:", currentBookmark.scrollY);
+            }, 100);
         } else {
             document.querySelector('.reader-container').scrollTop = 0;
         }
         
         attachScrollSave();
         updateStatus();
-        saveCompleteState();
+        saveBookmark();
     }
     
     function updateSelectors() {
@@ -606,10 +655,8 @@
         if (!container) return;
         const save = () => {
             if (!chapters.length) return;
-            const scrollY = container.scrollTop;
-            currentBookmark = { chapterIdx: currentChapterIdx, scrollY, timestamp: Date.now() };
+            saveBookmark();
             updateStatus();
-            saveCompleteState();
         };
         container.removeEventListener('scroll', save);
         container.addEventListener('scroll', () => {
@@ -684,14 +731,53 @@
     // ============= IMPORT =============
     async function importNovel(file, customRegex) {
         if (customRegex && customRegex.trim()) chapterSplitRegex = customRegex;
+        
+        const fileData = {
+            name: file.name,
+            size: file.size,
+            lastModified: file.lastModified
+        };
+        
+        // Check cache first
+        const cached = getCachedChapters(fileData);
+        
+        if (cached) {
+            chapters = cached.chapters;
+            if (cached.regex) chapterSplitRegex = cached.regex;
+            currentFileData = fileData;
+            
+            // Restore position from bookmark
+            const positionRestored = restorePositionFromBookmark();
+            
+            await renderCurrentChapter(true);
+            hideLoading();
+            if (positionRestored) {
+                showToast(`📖 ${chapters.length} chapters loaded - Resumed from chapter ${currentChapterIdx + 1}`);
+            } else {
+                showToast(`📖 ${chapters.length} chapters loaded from cache`);
+            }
+            return chapters.length;
+        }
+        
+        // Not cached - process file
         try {
             const split = await splitTextStreaming(file, chapterSplitRegex);
             chapters = split;
-            currentChapterIdx = 0;
-            currentBookmark = { chapterIdx: 0, scrollY: 0 };
+            currentFileData = fileData;
+            
+            // Cache the processed chapters
+            cacheChapters(currentFileData, chapters, chapterSplitRegex);
+            
+            // Try to restore position (in case we're re-uploading the same file)
+            const positionRestored = restorePositionFromBookmark();
+            
             await renderCurrentChapter(true);
             hideLoading();
-            showToast(`✅ ${chapters.length} chapters loaded!`);
+            if (positionRestored) {
+                showToast(`✅ ${chapters.length} chapters - Resumed from chapter ${currentChapterIdx + 1}`);
+            } else {
+                showToast(`✅ ${chapters.length} chapters loaded and cached!`);
+            }
             return chapters.length;
         } catch(err) {
             hideLoading();
@@ -700,13 +786,65 @@
         }
     }
     
+    // Auto-restore on page load (from cache + bookmark)
+    async function tryAutoRestore() {
+        const savedBookmark = localStorage.getItem(BOOKMARK_KEY);
+        if (!savedBookmark) return false;
+        
+        try {
+            const bookmark = JSON.parse(savedBookmark);
+            const cacheKey = CACHE_PREFIX + simpleHash(bookmark.fileName + bookmark.fileSize + (bookmark.fileLastModified || ''));
+            const cached = localStorage.getItem(cacheKey);
+            
+            if (cached) {
+                const data = JSON.parse(cached);
+                if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                    chapters = data.chapters;
+                    if (data.regex) chapterSplitRegex = data.regex;
+                    currentFileData = {
+                        name: bookmark.fileName,
+                        size: bookmark.fileSize,
+                        lastModified: bookmark.fileLastModified
+                    };
+                    currentChapterIdx = Math.min(bookmark.chapterIdx, chapters.length - 1);
+                    currentBookmark = { chapterIdx: currentChapterIdx, scrollY: bookmark.scrollY || 0 };
+                    
+                    await renderCurrentChapter(true);
+                    showToast(`📖 Restored ${chapters.length} chapters - Chapter ${currentChapterIdx + 1}`);
+                    return true;
+                }
+            }
+        } catch(e) {
+            console.error("Auto-restore failed:", e);
+        }
+        return false;
+    }
+    
+    function clearAllCache() {
+        if (confirm("Clear all cached novels and bookmarks?")) {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(CACHE_PREFIX)) {
+                    localStorage.removeItem(key);
+                }
+            }
+            localStorage.removeItem(BOOKMARK_KEY);
+            chapters = [];
+            currentChapterIdx = 0;
+            currentBookmark = null;
+            currentFileData = null;
+            renderCurrentChapter(false);
+            showToast("🗑️ Cache cleared");
+        }
+    }
+    
     // ============= GLOSSARY =============
     function saveGlossary() {
-        localStorage.setItem('novel_glossary', JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex }))));
+        localStorage.setItem(GLOSSARY_KEY, JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex }))));
     }
     
     function loadGlossary() {
-        const raw = localStorage.getItem('novel_glossary');
+        const raw = localStorage.getItem(GLOSSARY_KEY);
         if (raw) try { glossary = JSON.parse(raw); } catch(e) { glossary = []; }
         renderGlossaryUI();
     }
@@ -759,20 +897,13 @@
     
     // ============= INIT =============
     window.onload = async () => {
-        console.log("Page loaded - starting...");
+        console.log("Page loaded - checking for cached novel...");
         loadDarkModePreference();
         loadGlossary();
         
-        // Try to load saved novel
-        const hasSaved = loadCompleteState();
-        if (hasSaved && chapters.length > 0) {
-            console.log("Found saved novel with", chapters.length, "chapters");
-            showLoading('📖 Loading saved novel...');
-            await renderCurrentChapter(true);
-            hideLoading();
-            showToast(`📖 ${chapters.length} chapters loaded`);
-        } else {
-            console.log("No saved novel found");
+        // Try to auto-restore from cache + bookmark
+        const restored = await tryAutoRestore();
+        if (!restored) {
             await renderCurrentChapter(false);
         }
         
@@ -795,8 +926,8 @@
         bind('nextChapterBtnMobile', 'click', async () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; await renderCurrentChapter(false); closeSheet(); } });
         bind('chapterSelectDesktop', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); });
         bind('chapterSelectMobile', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); closeSheet(); });
-        bind('clearCacheBtnDesktop', 'click', clearAllData);
-        bind('clearCacheBtnMobile', 'click', clearAllData);
+        bind('clearCacheBtnDesktop', 'click', clearAllCache);
+        bind('clearCacheBtnMobile', 'click', clearAllCache);
         
         const handleUpload = async (e) => {
             if (e.target.files.length) {
