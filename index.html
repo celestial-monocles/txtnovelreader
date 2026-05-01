@@ -3,30 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Novel Reader | Streaming Line-by-Line | Handles ANY size</title>
+    <title>Novel Reader | Dark Mode | Streaming Line-by-Line</title>
     <style>
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
+        
+        /* Light Mode (default) */
+        :root {
+            --bg-body: #f5f2e8;
+            --bg-reader: #fef9ef;
+            --text-color: #1a1a1a;
+            --toolbar-bg: #2c2e3a;
+            --toolbar-button: #3e4050;
+            --toolbar-button-hover: #ffb347;
+            --border-color: #ffb347;
+            --chapter-select-bg: #1e1f2a;
+            --status-bg: #1e1f2a;
+            --copy-btn: #4c6a9e;
+            --split-btn: #9b59b6;
+            --danger-btn: #aa3e3e;
+            --success-btn: #2c7a4d;
+            --toast-bg: #2c7a4d;
+            --modal-bg: white;
+            --modal-text: #2c3e66;
+            --input-border: #ccc;
+            --import-bg: #f5f5f5;
+        }
+        
+        /* Dark Mode */
+        body.dark {
+            --bg-body: #1a1a2e;
+            --bg-reader: #16213e;
+            --text-color: #e2e2e2;
+            --toolbar-bg: #0f0f1a;
+            --toolbar-button: #2a2a3a;
+            --toolbar-button-hover: #ffb347;
+            --border-color: #ffb347;
+            --chapter-select-bg: #0a0a12;
+            --status-bg: #0a0a12;
+            --copy-btn: #3a5a7e;
+            --split-btn: #7e3a9e;
+            --danger-btn: #8a2e2e;
+            --success-btn: #1c5a3d;
+            --toast-bg: #1c5a3d;
+            --modal-bg: #1e1e2e;
+            --modal-text: #ffd93d;
+            --input-border: #444;
+            --import-bg: #252535;
+        }
+        
         body {
             font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
-            background: #f5f2e8;
+            background: var(--bg-body);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+            color: var(--text-color);
         }
         
         .reader-container {
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
-            background: #fef9ef;
+            background: var(--bg-reader);
             -webkit-overflow-scrolling: touch;
+            transition: background 0.3s;
         }
+        
         #reader-content {
             max-width: 1000px;
             margin: 0 auto;
@@ -36,20 +85,27 @@
             line-height: 1.7;
             white-space: pre-wrap;
             word-wrap: break-word;
+            color: var(--text-color);
         }
         
+        /* Desktop Toolbar */
         .desktop-toolbar {
             display: flex;
-            background: #2c2e3a;
+            background: var(--toolbar-bg);
             padding: 0.75rem 1rem;
             gap: 0.75rem;
             flex-wrap: wrap;
-            border-bottom: 2px solid #ffb347;
+            border-bottom: 2px solid var(--border-color);
             justify-content: center;
             align-items: center;
+            transition: background 0.3s;
         }
-        .desktop-toolbar button, .desktop-toolbar select, .desktop-toolbar label, .desktop-toolbar .status-badge {
-            background: #3e4050;
+        
+        .desktop-toolbar button, 
+        .desktop-toolbar select, 
+        .desktop-toolbar label,
+        .desktop-toolbar .status-badge {
+            background: var(--toolbar-button);
             border: none;
             color: white;
             padding: 0.4rem 0.9rem;
@@ -57,19 +113,25 @@
             font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
+            transition: background 0.2s;
         }
-        .desktop-toolbar button:hover { background: #ffb347; color: #1e1f2a; }
-        .desktop-toolbar .clear-cache { background: #aa3e3e; }
-        .desktop-toolbar .copy-btn { background: #4c6a9e; }
-        .desktop-toolbar .split-btn { background: #9b59b6; }
-        .desktop-toolbar .chapter-select { background: #1e1f2a; min-width: 200px; max-width: 300px; }
-        .desktop-toolbar .status-badge { background: #1e1f2a; cursor: default; }
         
+        .desktop-toolbar button:hover { background: var(--toolbar-button-hover); color: #1e1f2a; }
+        .desktop-toolbar .clear-cache { background: var(--danger-btn); }
+        .desktop-toolbar .copy-btn { background: var(--copy-btn); }
+        .desktop-toolbar .split-btn { background: var(--split-btn); }
+        .desktop-toolbar .dark-mode-btn { background: #6c5ce7; }
+        .desktop-toolbar .dark-mode-btn:hover { background: #5b4bc4; }
+        .desktop-toolbar .chapter-select { background: var(--chapter-select-bg); min-width: 200px; max-width: 300px; color: white; }
+        .desktop-toolbar .status-badge { background: var(--status-bg); cursor: default; }
+        .desktop-toolbar input[type="file"] { background: var(--toolbar-button); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
+        
+        /* Mobile FAB */
         .mobile-fab {
             position: fixed;
             bottom: 16px;
             right: 16px;
-            background: #2c2e3a;
+            background: var(--toolbar-bg);
             color: white;
             width: 56px;
             height: 56px;
@@ -82,14 +144,16 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 100;
             border: none;
+            transition: background 0.3s;
         }
         
+        /* Action Sheet */
         .action-sheet {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #2c2e3a;
+            background: var(--toolbar-bg);
             color: white;
             border-radius: 20px 20px 0 0;
             transform: translateY(100%);
@@ -107,13 +171,13 @@
             border-bottom: 1px solid #4a4e6b;
             position: sticky;
             top: 0;
-            background: #2c2e3a;
+            background: var(--toolbar-bg);
         }
         .close-sheet { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
         .action-sheet-content { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .action-row { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
         .action-btn {
-            background: #3e4050;
+            background: var(--toolbar-button);
             border: none;
             color: white;
             padding: 0.6rem 1rem;
@@ -124,12 +188,13 @@
             min-width: 70px;
             text-align: center;
         }
-        .action-btn.danger { background: #aa3e3e; }
-        .action-btn.copy { background: #4c6a9e; }
-        .action-btn.split { background: #9b59b6; }
-        .chapter-select-mobile { background: #1e1f2a; color: white; padding: 0.6rem; border-radius: 30px; border: none; flex: 2; min-width: 130px; }
-        .file-label-mobile { background: #4c6a9e; padding: 0.6rem 1rem; border-radius: 30px; cursor: pointer; text-align: center; flex: 1; }
-        .status-badge-mobile { background: #1e1f2a; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.7rem; text-align: center; }
+        .action-btn.danger { background: var(--danger-btn); }
+        .action-btn.copy { background: var(--copy-btn); }
+        .action-btn.split { background: var(--split-btn); }
+        .action-btn.dark { background: #6c5ce7; }
+        .chapter-select-mobile { background: var(--chapter-select-bg); color: white; padding: 0.6rem; border-radius: 30px; border: none; flex: 2; min-width: 130px; }
+        .file-label-mobile { background: var(--copy-btn); padding: 0.6rem 1rem; border-radius: 30px; cursor: pointer; text-align: center; flex: 1; }
+        .status-badge-mobile { background: var(--status-bg); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.7rem; text-align: center; }
         .sheet-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -141,32 +206,39 @@
         }
         .sheet-overlay.visible { opacity: 1; visibility: visible; }
         
+        /* Split Dialog */
         .split-dialog {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: var(--modal-bg);
+            color: var(--text-color);
             border-radius: 28px;
             padding: 1.5rem;
             z-index: 400;
             min-width: 300px;
             max-width: 90%;
             text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: none;
         }
         .split-dialog.show { display: block; }
+        .split-dialog h3 { margin: 0 0 0.5rem 0; color: var(--modal-text); }
+        .split-dialog p { margin: 0.5rem 0 1rem 0; color: var(--text-color); opacity: 0.8; line-height: 1.4; }
         .split-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
-        .split-buttons button { background: #4c6a9e; color: white; border: none; border-radius: 40px; padding: 0.6rem 1.5rem; cursor: pointer; }
-        .split-buttons button.part1 { background: #2c7a4d; }
-        .split-buttons button.part2 { background: #9b59b6; }
+        .split-buttons button { background: var(--copy-btn); color: white; border: none; border-radius: 40px; padding: 0.6rem 1.5rem; cursor: pointer; }
+        .split-buttons button.part1 { background: var(--success-btn); }
+        .split-buttons button.part2 { background: var(--split-btn); }
+        .split-dialog .close-dialog { margin-top: 1rem; background: var(--danger-btn); padding: 0.4rem 1rem; border-radius: 40px; border: none; color: white; cursor: pointer; }
         
+        /* Toast & Loading */
         .toast, .loading-indicator {
             position: fixed;
             bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
-            background: #2c7a4d;
+            background: var(--toast-bg);
             color: white;
             padding: 0.6rem 1.2rem;
             border-radius: 40px;
@@ -178,25 +250,27 @@
             white-space: nowrap;
         }
         .toast.show, .loading-indicator.visible { opacity: 1; }
-        .loading-indicator { background: #2c2e3a; }
+        .loading-indicator { background: var(--toolbar-bg); }
         
+        /* Progress Bar */
         .progress-container {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: 4px;
-            background: #3e4050;
+            background: var(--toolbar-button);
             z-index: 150;
             display: none;
         }
         .progress-bar {
             height: 100%;
-            background: #ffb347;
+            background: var(--border-color);
             width: 0%;
             transition: width 0.3s;
         }
         
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -208,7 +282,8 @@
             justify-content: center;
         }
         .modal-card {
-            background: white;
+            background: var(--modal-bg);
+            color: var(--text-color);
             width: 90%;
             max-width: 650px;
             max-height: 85vh;
@@ -216,13 +291,18 @@
             padding: 1.5rem;
             overflow-y: auto;
         }
+        .modal-card h3 { margin-top: 0; color: var(--modal-text); }
         .glossary-list { margin: 0.5rem 0; max-height: 200px; overflow-y: auto; }
         .glossary-item { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; flex-wrap: wrap; }
-        .glossary-item input { flex: 1; padding: 0.4rem; border: 1px solid #ccc; border-radius: 10px; }
-        .import-section { background: #f5f5f5; padding: 0.8rem; border-radius: 16px; margin-bottom: 0.8rem; }
+        .glossary-item input { flex: 1; padding: 0.4rem; border: 1px solid var(--input-border); border-radius: 10px; background: var(--bg-reader); color: var(--text-color); }
+        .import-section { background: var(--import-bg); padding: 0.8rem; border-radius: 16px; margin-bottom: 0.8rem; }
         .import-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
-        .import-buttons button, .import-buttons label { background: #4c6a9e; color: white; border: none; border-radius: 30px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.75rem; }
-        textarea { width: 100%; min-height: 80px; font-family: monospace; padding: 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #ccc; }
+        .import-buttons button, .import-buttons label { background: var(--copy-btn); color: white; border: none; border-radius: 30px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.75rem; }
+        .import-buttons #clearGlossaryBtn { background: var(--danger-btn); }
+        textarea { width: 100%; min-height: 80px; font-family: monospace; padding: 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid var(--input-border); background: var(--bg-reader); color: var(--text-color); }
+        .modal button { background: var(--copy-btn); color: white; border: none; border-radius: 30px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.8rem; }
+        .modal button.danger { background: var(--danger-btn); }
+        .modal button.success { background: var(--success-btn); }
         
         @media (max-width: 767px) { .desktop-toolbar { display: none; } }
         @media (min-width: 768px) { .mobile-fab, .action-sheet, .sheet-overlay { display: none; } }
@@ -238,6 +318,7 @@
     <button id="nextChapterBtnDesktop">▶</button>
     <button id="copyBtnDesktop" class="copy-btn">📋 Copy</button>
     <button id="splitCopyBtnDesktop" class="split-btn">✂️ Split</button>
+    <button id="darkModeBtnDesktop" class="dark-mode-btn">🌙 Dark</button>
     <button id="glossaryModalBtnDesktop">✏️ Glossary</button>
     <button id="clearCacheBtnDesktop" class="clear-cache">🗑️ Clear</button>
     <span class="status-badge" id="bookmarkStatusDesktop">📌</span>
@@ -253,9 +334,9 @@
         <div class="action-row"><label class="file-label-mobile">📂 Upload <input type="file" id="novelUploadMobile" accept=".txt,.doc,.docx" style="display:none;"></label></div>
         <div class="action-row"><button id="prevChapterBtnMobile" class="action-btn">◀</button><select id="chapterSelectMobile" class="chapter-select-mobile"></select><button id="nextChapterBtnMobile" class="action-btn">▶</button></div>
         <div class="action-row"><button id="copyBtnMobile" class="action-btn copy">📋 Copy</button><button id="splitCopyBtnMobile" class="action-btn split">✂️ Split</button></div>
-        <div class="action-row"><button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button><button id="clearCacheBtnMobile" class="action-btn danger">🗑️</button></div>
-        <div class="action-row"><div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div></div>
-        <hr><div style="font-size:0.7rem; text-align:center;">Streaming line-by-line • Handles ANY size</div>
+        <div class="action-row"><button id="darkModeBtnMobile" class="action-btn dark">🌙 Dark</button><button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button></div>
+        <div class="action-row"><button id="clearCacheBtnMobile" class="action-btn danger">🗑️ Clear</button><div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div></div>
+        <hr><div style="font-size:0.7rem; text-align:center; opacity:0.7;">Streaming line-by-line • Handles ANY size</div>
     </div>
 </div>
 
@@ -263,10 +344,10 @@
     <h3>✂️ Split Chapter</h3>
     <p id="splitInfo"></p>
     <div class="split-buttons"><button id="copyPart1Btn" class="part1">📋 Part 1</button><button id="copyPart2Btn" class="part2">📋 Part 2</button></div>
-    <button id="closeDialogBtn" style="margin-top:1rem; background:#aa3e3e; padding:0.4rem 1rem; border-radius:40px; border:none; color:white; cursor:pointer;">Cancel</button>
+    <button id="closeDialogBtn" class="close-dialog">Cancel</button>
 </div>
 
-<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Streaming line-by-line<br>✅ No freezing, even for 5000+ chapters</div></div></div>
+<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Streaming line-by-line<br>✅ No freezing, even for 5000+ chapters<br>✅ Dark mode available</div></div></div>
 
 <div id="toast" class="toast"></div>
 <div id="loadingIndicator" class="loading-indicator">📖 Loading...</div>
@@ -304,6 +385,28 @@
     const DB_NAME = "NovelReaderDB";
     let db = null;
     
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+        
+        // Update button texts
+        const darkBtns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
+        darkBtns.forEach(btn => {
+            if (btn) btn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+        });
+    }
+    
+    function loadDarkModePreference() {
+        const saved = localStorage.getItem('darkMode');
+        if (saved === 'true') {
+            document.body.classList.add('dark');
+            const darkBtns = document.querySelectorAll('#darkModeBtnDesktop, #darkModeBtnMobile');
+            darkBtns.forEach(btn => { if(btn) btn.innerHTML = '☀️ Light'; });
+        }
+    }
+    
     // ============= INDEXEDDB =============
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -325,11 +428,6 @@
         const tx = database.transaction(["novels"], "readwrite");
         tx.objectStore("novels").put({ id: novelId, ...data, timestamp: Date.now() });
         await tx.done;
-    }
-    
-    async function loadNovelFromDB(novelId) {
-        const database = await openDB();
-        return await database.transaction(["novels"]).objectStore("novels").get(novelId);
     }
     
     async function getAllNovels() {
@@ -409,17 +507,14 @@
         return result;
     }
     
-    // ============= STREAMING CHAPTER SPLITTER (Line by line, NO memory blowup) =============
+    // ============= STREAMING CHAPTER SPLITTER =============
     async function splitTextStreaming(file, regexPattern, fileName) {
         return new Promise((resolve, reject) => {
             const chaptersList = [];
             let currentChapterText = "";
             let currentChapterTitle = "";
             let chapterCount = 0;
-            let processedLines = 0;
-            let totalLines = 0;
             
-            // Create regex for detecting chapter headers
             let regex;
             try {
                 regex = new RegExp(regexPattern, 'i');
@@ -427,7 +522,6 @@
                 regex = /(\d+\s*[화話章节]\s*[^\n]{0,50})/i;
             }
             
-            // Use FileReader to read line by line via streaming
             const reader = new FileReader();
             let offset = 0;
             let leftover = "";
@@ -442,18 +536,13 @@
             function processChunk(text) {
                 const fullText = leftover + text;
                 const lines = fullText.split(/\r?\n/);
-                leftover = lines.pop() || ""; // Keep the last incomplete line for next chunk
+                leftover = lines.pop() || "";
                 
                 for (let line of lines) {
-                    processedLines++;
-                    
-                    // Check if this line contains a chapter header
                     const match = line.match(regex);
                     
                     if (match && match[0].trim().length > 0 && match[0].trim().length < 100) {
-                        // Found a chapter header - save previous chapter if exists
                         if (currentChapterText.trim().length > 0) {
-                            // Truncate extremely long chapters (over 200KB)
                             if (currentChapterText.length > 200000) {
                                 currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
                             }
@@ -463,17 +552,14 @@
                             });
                             chapterCount++;
                             
-                            // Update progress every 10 chapters
                             if (chapterCount % 10 === 0) {
                                 updateProgress(Math.min(95, (offset / file.size) * 100));
                                 showLoading(`📖 Processing... ${chapterCount} chapters found`);
                             }
                         }
-                        // Start new chapter
                         currentChapterTitle = match[0].trim();
                         currentChapterText = line + "\n";
                     } else {
-                        // Add line to current chapter
                         currentChapterText += line + "\n";
                     }
                 }
@@ -483,11 +569,9 @@
                 processChunk(e.target.result);
                 
                 if (offset < file.size) {
-                    // More data to read
                     updateProgress((offset / file.size) * 100);
                     readNextChunk();
                 } else {
-                    // End of file - save last chapter
                     if (currentChapterText.trim().length > 0) {
                         if (currentChapterText.length > 200000) {
                             currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
@@ -498,7 +582,6 @@
                         });
                         chapterCount++;
                     }
-                    
                     updateProgress(100);
                     setTimeout(() => hideLoading(), 500);
                     resolve(chaptersList);
@@ -507,7 +590,6 @@
             
             reader.onerror = (err) => reject(err);
             
-            // Start reading
             showLoading(`📖 Streaming ${file.name}...`);
             updateProgress(0);
             readNextChunk();
@@ -687,7 +769,7 @@
     function renderGlossaryUI() {
         const container = document.getElementById('glossaryEntriesContainer');
         if (!container) return;
-        if (glossary.length === 0) { container.innerHTML = '<div style="padding:1rem; color:#999;">No rules</div>'; return; }
+        if (glossary.length === 0) { container.innerHTML = '<div style="padding:1rem; text-align:center; opacity:0.7;">No rules</div>'; return; }
         container.innerHTML = '';
         glossary.forEach((rule, idx) => {
             const div = document.createElement('div'); div.className = 'glossary-item';
@@ -729,9 +811,14 @@
     function closeSheet() { document.getElementById('actionSheet').classList.remove('open'); document.getElementById('sheetOverlay').classList.remove('visible'); }
     
     window.onload = async () => {
+        loadDarkModePreference();
         await openDB();
         await loadGlossary();
         await loadSavedNovel();
+        
+        // Dark mode buttons
+        bind('darkModeBtnDesktop', 'click', toggleDarkMode);
+        bind('darkModeBtnMobile', 'click', toggleDarkMode);
         
         bind('copyBtnDesktop', 'click', copyFullChapter);
         bind('copyBtnMobile', 'click', () => { copyFullChapter(); closeSheet(); });
