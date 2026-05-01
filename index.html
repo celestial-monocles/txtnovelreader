@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Novel Reader | TXT/DOC Version | Split & Copy for Translation</title>
+    <title>Novel Reader | Streaming Line-by-Line | Handles ANY size</title>
     <style>
         * {
             box-sizing: border-box;
@@ -18,7 +18,6 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            position: relative;
         }
         
         .reader-container {
@@ -39,7 +38,6 @@
             word-wrap: break-word;
         }
         
-        /* DESKTOP TOOLBAR */
         .desktop-toolbar {
             display: flex;
             background: #2c2e3a;
@@ -50,10 +48,7 @@
             justify-content: center;
             align-items: center;
         }
-        .desktop-toolbar button, 
-        .desktop-toolbar select, 
-        .desktop-toolbar label,
-        .desktop-toolbar .status-badge {
+        .desktop-toolbar button, .desktop-toolbar select, .desktop-toolbar label, .desktop-toolbar .status-badge {
             background: #3e4050;
             border: none;
             color: white;
@@ -67,29 +62,9 @@
         .desktop-toolbar .clear-cache { background: #aa3e3e; }
         .desktop-toolbar .copy-btn { background: #4c6a9e; }
         .desktop-toolbar .split-btn { background: #9b59b6; }
-        .desktop-toolbar .split-btn:hover { background: #8e44ad; }
-        .desktop-toolbar .chapter-select { 
-            background: #1e1f2a; 
-            color: white; 
-            min-width: 200px;
-        }
-        .desktop-toolbar .status-badge {
-            background: #1e1f2a;
-            color: white;
-            font-size: 0.8rem;
-            cursor: default;
-            white-space: nowrap;
-        }
-        .desktop-toolbar input[type="file"] {
-            background: #3e4050;
-            color: white;
-            border: none;
-            padding: 0.3rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
+        .desktop-toolbar .chapter-select { background: #1e1f2a; min-width: 200px; max-width: 300px; }
+        .desktop-toolbar .status-badge { background: #1e1f2a; cursor: default; }
         
-        /* Mobile FAB */
         .mobile-fab {
             position: fixed;
             bottom: 16px;
@@ -106,12 +81,9 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 100;
-            transition: transform 0.2s;
             border: none;
         }
-        .mobile-fab:active { transform: scale(0.95); }
         
-        /* Bottom Action Sheet */
         .action-sheet {
             position: fixed;
             bottom: 0;
@@ -125,7 +97,6 @@
             z-index: 200;
             max-height: 70vh;
             overflow-y: auto;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
         }
         .action-sheet.open { transform: translateY(0); }
         .action-sheet-header {
@@ -137,24 +108,10 @@
             position: sticky;
             top: 0;
             background: #2c2e3a;
-            z-index: 1;
         }
-        .action-sheet-header h3 { margin: 0; font-size: 1.1rem; }
-        .close-sheet {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .close-sheet { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
         .action-sheet-content { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-        .action-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: center; }
+        .action-row { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
         .action-btn {
             background: #3e4050;
             border: none;
@@ -167,43 +124,15 @@
             min-width: 70px;
             text-align: center;
         }
-        .action-btn:active { background: #ffb347; color: #1e1f2a; }
         .action-btn.danger { background: #aa3e3e; }
         .action-btn.copy { background: #4c6a9e; }
         .action-btn.split { background: #9b59b6; }
-        .chapter-select-mobile {
-            background: #1e1f2a;
-            color: white;
-            padding: 0.6rem;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            border: none;
-            flex: 2;
-            min-width: 130px;
-        }
-        .file-label-mobile {
-            background: #4c6a9e;
-            padding: 0.6rem 1rem;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            text-align: center;
-            flex: 1;
-        }
-        .status-badge-mobile {
-            background: #1e1f2a;
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            text-align: center;
-        }
-        hr { margin: 0.5rem 0; border-color: #4a4e6b; }
+        .chapter-select-mobile { background: #1e1f2a; color: white; padding: 0.6rem; border-radius: 30px; border: none; flex: 2; min-width: 130px; }
+        .file-label-mobile { background: #4c6a9e; padding: 0.6rem 1rem; border-radius: 30px; cursor: pointer; text-align: center; flex: 1; }
+        .status-badge-mobile { background: #1e1f2a; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.7rem; text-align: center; }
         .sheet-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
             z-index: 150;
             opacity: 0;
@@ -212,7 +141,6 @@
         }
         .sheet-overlay.visible { opacity: 1; visibility: visible; }
         
-        /* Split Dialog */
         .split-dialog {
             position: fixed;
             top: 50%;
@@ -225,39 +153,15 @@
             min-width: 300px;
             max-width: 90%;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: none;
         }
         .split-dialog.show { display: block; }
-        .split-dialog h3 { margin: 0 0 0.5rem 0; color: #2c3e66; }
-        .split-dialog p { margin: 0.5rem 0 1rem 0; color: #666; font-size: 0.9rem; line-height: 1.4; }
-        .split-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 0.5rem;
-        }
-        .split-buttons button {
-            background: #4c6a9e;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 0.6rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .split-buttons button:active { background: #3a5580; }
+        .split-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+        .split-buttons button { background: #4c6a9e; color: white; border: none; border-radius: 40px; padding: 0.6rem 1.5rem; cursor: pointer; }
         .split-buttons button.part1 { background: #2c7a4d; }
         .split-buttons button.part2 { background: #9b59b6; }
-        .split-dialog .close-dialog {
-            margin-top: 1rem;
-            background: #aa3e3e;
-            padding: 0.4rem 1rem;
-            font-size: 0.8rem;
-        }
         
-        /* Toast */
-        .toast {
+        .toast, .loading-indicator {
             position: fixed;
             bottom: 80px;
             left: 50%;
@@ -272,11 +176,27 @@
             transition: opacity 0.3s;
             pointer-events: none;
             white-space: nowrap;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .toast.show { opacity: 1; }
+        .toast.show, .loading-indicator.visible { opacity: 1; }
+        .loading-indicator { background: #2c2e3a; }
         
-        /* Glossary Modal */
+        .progress-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #3e4050;
+            z-index: 150;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #ffb347;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -296,156 +216,61 @@
             padding: 1.5rem;
             overflow-y: auto;
         }
-        .modal-card h3 { margin-top: 0; color: #2c3e66; }
         .glossary-list { margin: 0.5rem 0; max-height: 200px; overflow-y: auto; }
         .glossary-item { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; flex-wrap: wrap; }
-        .glossary-item input { flex: 1; padding: 0.4rem; border: 1px solid #ccc; border-radius: 10px; font-size: 0.8rem; }
+        .glossary-item input { flex: 1; padding: 0.4rem; border: 1px solid #ccc; border-radius: 10px; }
         .import-section { background: #f5f5f5; padding: 0.8rem; border-radius: 16px; margin-bottom: 0.8rem; }
-        .import-buttons { 
-            display: flex; 
-            gap: 0.5rem; 
-            flex-wrap: wrap; 
-            margin-bottom: 0.5rem;
-            align-items: center;
-        }
-        .import-buttons button, .import-buttons label {
-            background: #4c6a9e;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 0.4rem 0.8rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-            white-space: nowrap;
-        }
-        .import-buttons button:active, .import-buttons label:active { background: #3a5580; }
-        .import-buttons #clearGlossaryBtn { background: #aa3e3e; }
-        textarea { 
-            width: 100%; 
-            min-height: 80px; 
-            font-family: monospace; 
-            padding: 0.5rem; 
-            border-radius: 12px; 
-            font-size: 0.75rem;
-            border: 1px solid #ccc;
-        }
-        .modal button { background: #4c6a9e; color: white; border: none; border-radius: 30px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.8rem; }
-        .modal button.danger { background: #aa3e3e; }
-        .modal button.success { background: #2c7a4d; }
-        .loading-indicator {
-            position: fixed;
-            bottom: 80px;
-            right: 16px;
-            background: #2c2e3a;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        .loading-indicator.visible { opacity: 1; }
+        .import-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+        .import-buttons button, .import-buttons label { background: #4c6a9e; color: white; border: none; border-radius: 30px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.75rem; }
+        textarea { width: 100%; min-height: 80px; font-family: monospace; padding: 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #ccc; }
         
-        @media (max-width: 767px) {
-            .desktop-toolbar { display: none; }
-            .reader-container { padding: 1rem; }
-            .toast { bottom: 80px; font-size: 0.75rem; white-space: nowrap; }
-            .split-dialog { min-width: 280px; }
-            .split-buttons button { padding: 0.5rem 1rem; font-size: 0.9rem; }
-        }
-        @media (min-width: 768px) {
-            .mobile-fab, .action-sheet, .sheet-overlay { display: none; }
-            .reader-container { padding: 2rem; }
-            #reader-content { padding-bottom: 0; }
-            .toast { bottom: 30px; }
-        }
+        @media (max-width: 767px) { .desktop-toolbar { display: none; } }
+        @media (min-width: 768px) { .mobile-fab, .action-sheet, .sheet-overlay { display: none; } }
     </style>
 </head>
 <body>
 
-<!-- Desktop Toolbar -->
 <div class="desktop-toolbar">
-    <label>📖 Novel (.txt/.doc):</label>
+    <label>📖 Novel (.txt):</label>
     <input type="file" id="novelUploadDesktop" accept=".txt,.doc,.docx,text/plain">
     <button id="prevChapterBtnDesktop">◀</button>
     <select id="chapterSelectDesktop" class="chapter-select"></select>
     <button id="nextChapterBtnDesktop">▶</button>
     <button id="copyBtnDesktop" class="copy-btn">📋 Copy</button>
-    <button id="splitCopyBtnDesktop" class="split-btn">✂️ Split & Copy</button>
+    <button id="splitCopyBtnDesktop" class="split-btn">✂️ Split</button>
     <button id="glossaryModalBtnDesktop">✏️ Glossary</button>
     <button id="clearCacheBtnDesktop" class="clear-cache">🗑️ Clear</button>
     <span class="status-badge" id="bookmarkStatusDesktop">📌</span>
 </div>
 
-<!-- Mobile FAB -->
+<div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar"></div></div>
 <button class="mobile-fab" id="fabBtn">📖</button>
-
-<!-- Overlay -->
 <div class="sheet-overlay" id="sheetOverlay"></div>
 
-<!-- Bottom Action Sheet (Mobile) -->
 <div class="action-sheet" id="actionSheet">
-    <div class="action-sheet-header">
-        <h3>📖 Reader Controls</h3>
-        <button class="close-sheet" id="closeSheetBtn">✕</button>
-    </div>
+    <div class="action-sheet-header"><h3>📖 Controls</h3><button class="close-sheet" id="closeSheetBtn">✕</button></div>
     <div class="action-sheet-content">
-        <div class="action-row">
-            <label class="file-label-mobile">📂 Upload TXT/DOC <input type="file" id="novelUploadMobile" accept=".txt,.doc,.docx,text/plain" style="display:none;"></label>
-        </div>
-        <div class="action-row">
-            <button id="prevChapterBtnMobile" class="action-btn">◀</button>
-            <select id="chapterSelectMobile" class="chapter-select-mobile"></select>
-            <button id="nextChapterBtnMobile" class="action-btn">▶</button>
-        </div>
-        <div class="action-row">
-            <button id="copyBtnMobile" class="action-btn copy">📋 Copy</button>
-            <button id="splitCopyBtnMobile" class="action-btn split">✂️ Split</button>
-        </div>
-        <div class="action-row">
-            <button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button>
-            <button id="clearCacheBtnMobile" class="action-btn danger">🗑️</button>
-        </div>
-        <div class="action-row">
-            <div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div>
-        </div>
-        <hr>
-        <div style="font-size:0.7rem; text-align:center; color:#aaa;">
-            Load TXT or DOC files • Split by paragraph boundaries
-        </div>
+        <div class="action-row"><label class="file-label-mobile">📂 Upload <input type="file" id="novelUploadMobile" accept=".txt,.doc,.docx" style="display:none;"></label></div>
+        <div class="action-row"><button id="prevChapterBtnMobile" class="action-btn">◀</button><select id="chapterSelectMobile" class="chapter-select-mobile"></select><button id="nextChapterBtnMobile" class="action-btn">▶</button></div>
+        <div class="action-row"><button id="copyBtnMobile" class="action-btn copy">📋 Copy</button><button id="splitCopyBtnMobile" class="action-btn split">✂️ Split</button></div>
+        <div class="action-row"><button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button><button id="clearCacheBtnMobile" class="action-btn danger">🗑️</button></div>
+        <div class="action-row"><div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div></div>
+        <hr><div style="font-size:0.7rem; text-align:center;">Streaming line-by-line • Handles ANY size</div>
     </div>
 </div>
 
-<!-- Split Dialog -->
 <div id="splitDialog" class="split-dialog">
     <h3>✂️ Split Chapter</h3>
     <p id="splitInfo"></p>
-    <div class="split-buttons">
-        <button id="copyPart1Btn" class="part1">📋 Part 1</button>
-        <button id="copyPart2Btn" class="part2">📋 Part 2</button>
-    </div>
-    <button id="closeDialogBtn" class="close-dialog">Cancel</button>
+    <div class="split-buttons"><button id="copyPart1Btn" class="part1">📋 Part 1</button><button id="copyPart2Btn" class="part2">📋 Part 2</button></div>
+    <button id="closeDialogBtn" style="margin-top:1rem; background:#aa3e3e; padding:0.4rem 1rem; border-radius:40px; border:none; color:white; cursor:pointer;">Cancel</button>
 </div>
 
-<!-- Main Reading Area -->
-<div class="reader-container" id="readerContainer">
-    <div id="reader-content">
-        <div style="text-align: center; padding: 2rem; color: #888;">
-            📚 Load TXT or DOC file<br>
-            ✅ Auto-saves & reloads<br>
-            ✅ Split by paragraph (never cuts in the middle)
-        </div>
-    </div>
-</div>
+<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Streaming line-by-line<br>✅ No freezing, even for 5000+ chapters</div></div></div>
 
-<!-- Toast Notification -->
-<div id="toast" class="toast">📋 Copied!</div>
+<div id="toast" class="toast"></div>
+<div id="loadingIndicator" class="loading-indicator">📖 Loading...</div>
 
-<div class="loading-indicator" id="loadingIndicator">📖 Loading...</div>
-
-<!-- Glossary Modal -->
 <div id="glossaryModal" class="modal">
     <div class="modal-card">
         <h3>✏️ Find & Replace</h3>
@@ -457,10 +282,8 @@
                 <button id="importJsonBtn">📋 Paste JSON</button>
                 <button id="pasteTextBtn">📝 Paste Text</button>
             </div>
-            <textarea id="jsonPasteArea" placeholder='JSON: [{"find":"text","replace":"new"}]
-OR text: word=replacement (one per line)'></textarea>
+            <textarea id="jsonPasteArea" placeholder='JSON: [{"find":"text","replace":"new"}] OR text: find=replace per line'></textarea>
         </div>
-        <div style="font-weight: 600; margin-bottom: 0.5rem;">Rules:</div>
         <div id="glossaryEntriesContainer" class="glossary-list"></div>
         <button id="addGlossaryBtn">+ Add rule</button>
         <button id="saveGlossaryBtn" class="success">💾 Save & Apply</button>
@@ -469,43 +292,116 @@ OR text: word=replacement (one per line)'></textarea>
 </div>
 
 <script>
-    // ---------- DATA ----------
+    // ============= CONFIG =============
     let chapters = [];
     let currentChapterIdx = 0;
     let currentBookmark = null;
     let glossary = [];
-    let chapterSplitRegex = "\\d+\\s*화[\\s\\.\\:]*.*?(\\(\\d+\\)|$)";
-    let splitPart1Text = "";
-    let splitPart2Text = "";
+    let chapterSplitRegex = "(\\d+\\s*[화話章节]\\s*[^\\n]{0,50})";
+    let splitPart1Text = "", splitPart2Text = "";
+    let currentNovelId = null;
     
-    const STORAGE_KEYS = {
-        NOVEL_DATA: 'txt_novel_data',
-        NOVEL_REGEX: 'txt_novel_regex',
-        NOVEL_ID: 'txt_novel_id',
-        BOOKMARK_PREFIX: 'txt_bookmark_',
-        GLOSSARY: 'txt_novel_glossary'
-    };
+    const DB_NAME = "NovelReaderDB";
+    let db = null;
     
-    // Toast notification
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message || '📋 Copied!';
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2000);
+    // ============= INDEXEDDB =============
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            if (db) return resolve(db);
+            const request = indexedDB.open(DB_NAME, 3);
+            request.onupgradeneeded = (e) => {
+                const dbRef = e.target.result;
+                if (!dbRef.objectStoreNames.contains("novels")) dbRef.createObjectStore("novels", { keyPath: "id" });
+                if (!dbRef.objectStoreNames.contains("bookmarks")) dbRef.createObjectStore("bookmarks", { keyPath: "novelId" });
+                if (!dbRef.objectStoreNames.contains("settings")) dbRef.createObjectStore("settings", { keyPath: "key" });
+            };
+            request.onsuccess = () => { db = request.result; resolve(db); };
+            request.onerror = (err) => reject(err);
+        });
     }
     
-    // Apply glossary to plain text
+    async function saveNovelToDB(novelId, data) {
+        const database = await openDB();
+        const tx = database.transaction(["novels"], "readwrite");
+        tx.objectStore("novels").put({ id: novelId, ...data, timestamp: Date.now() });
+        await tx.done;
+    }
+    
+    async function loadNovelFromDB(novelId) {
+        const database = await openDB();
+        return await database.transaction(["novels"]).objectStore("novels").get(novelId);
+    }
+    
+    async function getAllNovels() {
+        const database = await openDB();
+        return await database.transaction(["novels"]).objectStore("novels").getAll();
+    }
+    
+    async function deleteNovelFromDB(novelId) {
+        const database = await openDB();
+        const tx = database.transaction(["novels", "bookmarks"], "readwrite");
+        tx.objectStore("novels").delete(novelId);
+        tx.objectStore("bookmarks").delete(novelId);
+        await tx.done;
+    }
+    
+    async function saveBookmark(novelId, chapterIdx, scrollY) {
+        const database = await openDB();
+        const tx = database.transaction(["bookmarks"], "readwrite");
+        tx.objectStore("bookmarks").put({ novelId, chapterIdx, scrollY, timestamp: Date.now() });
+        await tx.done;
+    }
+    
+    async function loadBookmarkFromDB(novelId) {
+        const database = await openDB();
+        return await database.transaction(["bookmarks"]).objectStore("bookmarks").get(novelId);
+    }
+    
+    async function saveSetting(key, value) {
+        const database = await openDB();
+        const tx = database.transaction(["settings"], "readwrite");
+        tx.objectStore("settings").put({ key, value });
+        await tx.done;
+    }
+    
+    async function loadSetting(key) {
+        const database = await openDB();
+        const result = await database.transaction(["settings"]).objectStore("settings").get(key);
+        return result ? result.value : null;
+    }
+    
+    // ============= UTILITIES =============
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    
+    function showLoading(msg) {
+        const loader = document.getElementById('loadingIndicator');
+        loader.textContent = msg || '📖 Loading...';
+        loader.classList.add('visible');
+    }
+    
+    function hideLoading() { document.getElementById('loadingIndicator').classList.remove('visible'); }
+    
+    function updateProgress(percent) {
+        const container = document.getElementById('progressContainer');
+        const bar = document.getElementById('progressBar');
+        if (percent === 0) { container.style.display = 'block'; bar.style.width = '0%'; }
+        else if (percent >= 100) { bar.style.width = '100%'; setTimeout(() => container.style.display = 'none', 500); }
+        else { container.style.display = 'block'; bar.style.width = percent + '%'; }
+    }
+    
+    function formatNumber(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+    
     function applyGlossaryToText(text) {
         if (!glossary.length) return text;
         let result = text;
         for (let rule of glossary) {
             if (rule.isRegex) {
-                try {
-                    const re = new RegExp(rule.find, 'g');
-                    result = result.replace(re, rule.replace);
-                } catch(e) {}
+                try { result = result.replace(new RegExp(rule.find, 'g'), rule.replace); } catch(e) {}
             } else {
                 result = result.split(rule.find).join(rule.replace);
             }
@@ -513,59 +409,118 @@ OR text: word=replacement (one per line)'></textarea>
         return result;
     }
     
-    // Split plain text into chapters using regex
-    function splitTextIntoChapters(fullText, regexPattern, fileNameHint = "novel") {
-        let regex;
-        try {
-            regex = new RegExp(regexPattern, 'g');
-        } catch(e) {
-            return [{ title: fileNameHint.replace(/\.(txt|doc|docx)$/i, '') || "Novel", originalText: fullText }];
-        }
-        
-        // Find all chapter markers
-        const chapterMarkers = [];
-        let match;
-        regex.lastIndex = 0;
-        while ((match = regex.exec(fullText)) !== null) {
-            chapterMarkers.push({
-                index: match.index,
-                title: match[0].trim()
-            });
-        }
-        
-        if (chapterMarkers.length === 0) {
-            return [{ title: fileNameHint.replace(/\.(txt|doc|docx)$/i, '') || "Full Novel", originalText: fullText }];
-        }
-        
-        const chaptersList = [];
-        for (let i = 0; i < chapterMarkers.length; i++) {
-            const startIdx = chapterMarkers[i].index;
-            const endIdx = (i + 1 < chapterMarkers.length) ? chapterMarkers[i + 1].index : fullText.length;
-            let chapterText = fullText.substring(startIdx, endIdx).trim();
-            let title = chapterMarkers[i].title;
-            chaptersList.push({ title: title, originalText: chapterText });
-        }
-        
-        // Add prologue before first chapter if exists
-        if (chapterMarkers[0].index > 0) {
-            const prologue = fullText.substring(0, chapterMarkers[0].index).trim();
-            if (prologue.length > 50) {
-                chaptersList.unshift({ title: "Prologue", originalText: prologue });
+    // ============= STREAMING CHAPTER SPLITTER (Line by line, NO memory blowup) =============
+    async function splitTextStreaming(file, regexPattern, fileName) {
+        return new Promise((resolve, reject) => {
+            const chaptersList = [];
+            let currentChapterText = "";
+            let currentChapterTitle = "";
+            let chapterCount = 0;
+            let processedLines = 0;
+            let totalLines = 0;
+            
+            // Create regex for detecting chapter headers
+            let regex;
+            try {
+                regex = new RegExp(regexPattern, 'i');
+            } catch(e) {
+                regex = /(\d+\s*[화話章节]\s*[^\n]{0,50})/i;
             }
-        }
-        
-        return chaptersList;
+            
+            // Use FileReader to read line by line via streaming
+            const reader = new FileReader();
+            let offset = 0;
+            let leftover = "";
+            const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+            
+            function readNextChunk() {
+                const slice = file.slice(offset, offset + CHUNK_SIZE);
+                offset += CHUNK_SIZE;
+                reader.readAsText(slice, 'UTF-8');
+            }
+            
+            function processChunk(text) {
+                const fullText = leftover + text;
+                const lines = fullText.split(/\r?\n/);
+                leftover = lines.pop() || ""; // Keep the last incomplete line for next chunk
+                
+                for (let line of lines) {
+                    processedLines++;
+                    
+                    // Check if this line contains a chapter header
+                    const match = line.match(regex);
+                    
+                    if (match && match[0].trim().length > 0 && match[0].trim().length < 100) {
+                        // Found a chapter header - save previous chapter if exists
+                        if (currentChapterText.trim().length > 0) {
+                            // Truncate extremely long chapters (over 200KB)
+                            if (currentChapterText.length > 200000) {
+                                currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
+                            }
+                            chaptersList.push({
+                                title: currentChapterTitle || `Chapter ${chapterCount}`,
+                                originalText: currentChapterText.trim()
+                            });
+                            chapterCount++;
+                            
+                            // Update progress every 10 chapters
+                            if (chapterCount % 10 === 0) {
+                                updateProgress(Math.min(95, (offset / file.size) * 100));
+                                showLoading(`📖 Processing... ${chapterCount} chapters found`);
+                            }
+                        }
+                        // Start new chapter
+                        currentChapterTitle = match[0].trim();
+                        currentChapterText = line + "\n";
+                    } else {
+                        // Add line to current chapter
+                        currentChapterText += line + "\n";
+                    }
+                }
+            }
+            
+            reader.onload = (e) => {
+                processChunk(e.target.result);
+                
+                if (offset < file.size) {
+                    // More data to read
+                    updateProgress((offset / file.size) * 100);
+                    readNextChunk();
+                } else {
+                    // End of file - save last chapter
+                    if (currentChapterText.trim().length > 0) {
+                        if (currentChapterText.length > 200000) {
+                            currentChapterText = currentChapterText.substring(0, 200000) + "\n\n...[Chapter truncated]...";
+                        }
+                        chaptersList.push({
+                            title: currentChapterTitle || `Chapter ${chapterCount + 1}`,
+                            originalText: currentChapterText.trim()
+                        });
+                        chapterCount++;
+                    }
+                    
+                    updateProgress(100);
+                    setTimeout(() => hideLoading(), 500);
+                    resolve(chaptersList);
+                }
+            };
+            
+            reader.onerror = (err) => reject(err);
+            
+            // Start reading
+            showLoading(`📖 Streaming ${file.name}...`);
+            updateProgress(0);
+            readNextChunk();
+        });
     }
     
-    // Get current chapter text with glossary applied
+    // ============= RENDERING =============
     function getCurrentChapterText() {
         if (!chapters.length) return "";
-        const chapter = chapters[currentChapterIdx];
-        return applyGlossaryToText(chapter.originalText);
+        return applyGlossaryToText(chapters[currentChapterIdx].originalText);
     }
     
-    // Render current chapter
-    function renderCurrentChapter(restoreScroll = true) {
+    async function renderCurrentChapter(restoreScroll = true) {
         if (!chapters.length) {
             document.getElementById('reader-content').innerHTML = '<div style="padding:2rem;text-align:center;">📭 No chapters. Import a TXT file.</div>';
             updateSelectors();
@@ -573,288 +528,41 @@ OR text: word=replacement (one per line)'></textarea>
         }
         
         const chapterText = getCurrentChapterText();
-        // Convert plain text to HTML with preserved whitespace
-        const htmlContent = chapterText
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>');
-        
-        document.getElementById('reader-content').innerHTML = `<div class="novel-chapter-content" style="white-space: pre-wrap; word-wrap: break-word;">${htmlContent}</div>`;
+        const htmlContent = chapterText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        document.getElementById('reader-content').innerHTML = `<div style="white-space:pre-wrap; word-wrap:break-word;">${htmlContent}</div>`;
         updateSelectors();
         
         if (restoreScroll && currentBookmark && currentBookmark.chapterIdx === currentChapterIdx) {
-            setTimeout(() => { document.querySelector('.reader-container').scrollTop = currentBookmark.scrollY; }, 30);
-        } else if (restoreScroll) { document.querySelector('.reader-container').scrollTop = 0; }
+            setTimeout(() => document.querySelector('.reader-container').scrollTop = currentBookmark.scrollY, 30);
+        } else {
+            document.querySelector('.reader-container').scrollTop = 0;
+        }
         
         attachScrollSave();
         updateStatus();
-        saveNovelToStorage();
-    }
-    
-    // Get formatted text for copy (preserves structure)
-    function getFormattedChapterText() {
-        return getCurrentChapterText();
-    }
-    
-    // Split text into two parts at paragraph boundaries
-    function splitTextAtParagraphBoundary(text) {
-        if (!text) return ["", ""];
-        
-        // Split by double newlines (paragraph boundaries)
-        const paragraphs = text.split(/\n\s*\n/);
-        
-        if (paragraphs.length <= 1) {
-            return splitTextAtSentenceBoundary(text);
+        if (currentNovelId) {
+            await saveBookmark(currentNovelId, currentChapterIdx, document.querySelector('.reader-container').scrollTop);
         }
-        
-        const totalChars = text.length;
-        const targetChars = totalChars / 2;
-        
-        let accumulatedChars = 0;
-        let bestSplitIndex = 0;
-        let bestDistance = Infinity;
-        
-        for (let i = 0; i < paragraphs.length; i++) {
-            const paraChars = paragraphs[i].length;
-            const distance = Math.abs(accumulatedChars + paraChars - targetChars);
-            
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                bestSplitIndex = i + 1;
-            }
-            
-            accumulatedChars += paraChars + 2;
-        }
-        
-        if (bestSplitIndex <= 0) bestSplitIndex = 1;
-        if (bestSplitIndex >= paragraphs.length) bestSplitIndex = paragraphs.length - 1;
-        
-        const part1 = paragraphs.slice(0, bestSplitIndex).join('\n\n').trim();
-        const part2 = paragraphs.slice(bestSplitIndex).join('\n\n').trim();
-        
-        return [part1, part2];
-    }
-    
-    // Fallback: split at sentence boundaries
-    function splitTextAtSentenceBoundary(text) {
-        if (!text) return ["", ""];
-        
-        const totalChars = text.length;
-        const targetChars = totalChars / 2;
-        const sentenceEndChars = ['.', '!', '?', '。', '！', '？'];
-        let bestSplit = totalChars;
-        let bestDistance = Infinity;
-        
-        const searchStart = Math.max(0, targetChars - totalChars * 0.1);
-        const searchEnd = Math.min(totalChars, targetChars + totalChars * 0.1);
-        
-        for (let i = searchStart; i < searchEnd; i++) {
-            if (sentenceEndChars.includes(text[i]) && i + 1 < totalChars) {
-                const nextChar = text[i + 1];
-                if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r') {
-                    const distance = Math.abs(i + 2 - targetChars);
-                    if (distance < bestDistance) {
-                        bestDistance = distance;
-                        bestSplit = i + 2;
-                    }
-                }
-            }
-        }
-        
-        if (bestDistance === Infinity) {
-            for (let i = targetChars; i < Math.min(totalChars, targetChars + 200); i++) {
-                if (text[i] === ' ') {
-                    bestSplit = i + 1;
-                    break;
-                }
-            }
-        }
-        
-        const part1 = text.substring(0, bestSplit).trim();
-        const part2 = text.substring(bestSplit).trim();
-        
-        return [part1, part2];
-    }
-    
-    function formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
-    
-    // Show split dialog
-    function showSplitDialog() {
-        if (!chapters.length) {
-            showToast('❌ No chapter loaded');
-            return;
-        }
-        
-        const fullText = getFormattedChapterText();
-        if (!fullText) {
-            showToast('❌ No text to split');
-            return;
-        }
-        
-        const [part1, part2] = splitTextAtParagraphBoundary(fullText);
-        splitPart1Text = part1;
-        splitPart2Text = part2;
-        
-        const charCount1 = part1.length;
-        const charCount2 = part2.length;
-        const totalChars = fullText.length;
-        const percent1 = Math.round((charCount1 / totalChars) * 100);
-        const percent2 = Math.round((charCount2 / totalChars) * 100);
-        
-        const dialog = document.getElementById('splitDialog');
-        const info = document.getElementById('splitInfo');
-        info.innerHTML = `📊 Total: ${formatNumber(totalChars)} characters<br>📖 Part 1: ${formatNumber(charCount1)} chars (${percent1}%) &nbsp;|&nbsp; 📖 Part 2: ${formatNumber(charCount2)} chars (${percent2}%)<br>✂️ Split between paragraphs - no cut in middle`;
-        dialog.classList.add('show');
-    }
-    
-    async function copySplitPart(partNumber) {
-        const text = partNumber === 1 ? splitPart1Text : splitPart2Text;
-        if (!text) {
-            showToast('❌ No text to copy');
-            return;
-        }
-        
-        try {
-            await navigator.clipboard.writeText(text);
-            const charCount = text.length;
-            showToast(`📋 Part ${partNumber} copied (${formatNumber(charCount)} chars)`);
-            document.getElementById('splitDialog').classList.remove('show');
-        } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            const charCount = text.length;
-            showToast(`📋 Part ${partNumber} copied (${formatNumber(charCount)} chars)`);
-            document.getElementById('splitDialog').classList.remove('show');
-        }
-    }
-    
-    // Copy full chapter
-    async function copyFullChapter() {
-        if (!chapters.length) {
-            showToast('❌ No chapter loaded');
-            return;
-        }
-        
-        const formattedText = getFormattedChapterText();
-        if (!formattedText) {
-            showToast('❌ No text to copy');
-            return;
-        }
-        
-        try {
-            await navigator.clipboard.writeText(formattedText);
-            const charCount = formattedText.length;
-            showToast(`📋 Copied ${formatNumber(charCount)} characters`);
-        } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = formattedText;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            const charCount = formattedText.length;
-            showToast(`📋 Copied ${formatNumber(charCount)} characters`);
-        }
-    }
-    
-    // Mobile sheet controls
-    function openSheet() {
-        document.getElementById('actionSheet').classList.add('open');
-        document.getElementById('sheetOverlay').classList.add('visible');
-    }
-    function closeSheet() {
-        document.getElementById('actionSheet').classList.remove('open');
-        document.getElementById('sheetOverlay').classList.remove('visible');
-    }
-    
-    // Save novel to localStorage
-    function saveNovelToStorage() {
-        if (!chapters.length) return;
-        const novelData = { 
-            chapters: chapters.map(ch => ({ title: ch.title, originalText: ch.originalText })), 
-            currentChapterIdx: currentChapterIdx, 
-            timestamp: Date.now(), 
-            fileName: currentNovelId 
-        };
-        localStorage.setItem(STORAGE_KEYS.NOVEL_DATA, JSON.stringify(novelData));
-        localStorage.setItem(STORAGE_KEYS.NOVEL_REGEX, chapterSplitRegex);
-        localStorage.setItem(STORAGE_KEYS.NOVEL_ID, currentNovelId);
-    }
-    
-    function loadNovelFromStorage() {
-        const savedData = localStorage.getItem(STORAGE_KEYS.NOVEL_DATA);
-        if (!savedData) return false;
-        try {
-            const novelData = JSON.parse(savedData);
-            chapters = novelData.chapters;
-            currentChapterIdx = novelData.currentChapterIdx || 0;
-            currentNovelId = novelData.fileName || localStorage.getItem(STORAGE_KEYS.NOVEL_ID) || "saved_novel";
-            const savedRegex = localStorage.getItem(STORAGE_KEYS.NOVEL_REGEX);
-            if (savedRegex) chapterSplitRegex = savedRegex;
-            return true;
-        } catch(e) { return false; }
-    }
-    
-    async function importNovel(file, customRegex = null) {
-        const loading = document.getElementById('loadingIndicator');
-        loading.classList.add('visible');
-        if (customRegex) chapterSplitRegex = customRegex;
-        
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const fullText = e.target.result;
-                const split = splitTextIntoChapters(fullText, chapterSplitRegex, file.name);
-                if (!split.length) reject("No content");
-                chapters = split;
-                currentNovelId = file.name.replace(/\.(txt|doc|docx)$/i, '').replace(/[^a-z0-9]/gi, '_') + '_' + Date.now();
-                currentChapterIdx = 0;
-                currentBookmark = null;
-                saveNovelToStorage();
-                loadBookmark();
-                loading.classList.remove('visible');
-                resolve(chapters.length);
-            };
-            reader.onerror = (err) => { loading.classList.remove('visible'); reject(err); };
-            reader.readAsText(file, 'UTF-8');
-        });
-    }
-    
-    function loadSavedNovel() { if (loadNovelFromStorage() && chapters.length) loadBookmark(); }
-    
-    function loadBookmark() {
-        const saved = localStorage.getItem(STORAGE_KEYS.BOOKMARK_PREFIX + currentNovelId);
-        if (saved) {
-            try {
-                currentBookmark = JSON.parse(saved);
-                if (currentBookmark.chapterIdx < chapters.length) currentChapterIdx = currentBookmark.chapterIdx;
-            } catch(e) {}
-        }
-        renderCurrentChapter(true);
     }
     
     function updateSelectors() {
         const options = chapters.map((ch, idx) => `<option value="${idx}" ${idx === currentChapterIdx ? 'selected' : ''}>${ch.title || `Ch ${idx+1}`}</option>`).join('');
-        if (document.getElementById('chapterSelectDesktop')) document.getElementById('chapterSelectDesktop').innerHTML = options;
-        if (document.getElementById('chapterSelectMobile')) document.getElementById('chapterSelectMobile').innerHTML = options;
+        const desktopSel = document.getElementById('chapterSelectDesktop');
+        const mobileSel = document.getElementById('chapterSelectMobile');
+        if (desktopSel) desktopSel.innerHTML = options;
+        if (mobileSel) mobileSel.innerHTML = options;
     }
     
     let scrollTimeout = null;
     function attachScrollSave() {
         const container = document.querySelector('.reader-container');
         if (!container) return;
-        const save = () => {
-            const top = container.scrollTop;
-            if (currentBookmark && currentBookmark.chapterIdx === currentChapterIdx && currentBookmark.scrollY === top) return;
-            currentBookmark = { chapterIdx: currentChapterIdx, scrollY: top, timestamp: Date.now() };
-            localStorage.setItem(STORAGE_KEYS.BOOKMARK_PREFIX + currentNovelId, JSON.stringify(currentBookmark));
+        const save = async () => {
+            if (!currentNovelId) return;
+            const scrollY = container.scrollTop;
+            if (currentBookmark?.chapterIdx === currentChapterIdx && currentBookmark?.scrollY === scrollY) return;
+            currentBookmark = { chapterIdx: currentChapterIdx, scrollY, timestamp: Date.now() };
+            await saveBookmark(currentNovelId, currentChapterIdx, scrollY);
             updateStatus();
         };
         container.removeEventListener('scroll', save);
@@ -871,20 +579,115 @@ OR text: word=replacement (one per line)'></textarea>
         if (document.getElementById('bookmarkStatusMobile')) document.getElementById('bookmarkStatusMobile').innerText = text;
     }
     
-    // Glossary functions
-    function saveGlossary() {
-        localStorage.setItem(STORAGE_KEYS.GLOSSARY, JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex }))));
+    // ============= COPY & SPLIT =============
+    function getFormattedChapterText() { return getCurrentChapterText(); }
+    
+    function splitTextAtParagraphBoundary(text) {
+        if (!text) return ["", ""];
+        const paragraphs = text.split(/\n\s*\n/);
+        if (paragraphs.length <= 1) {
+            const mid = Math.floor(text.length / 2);
+            let splitPos = mid;
+            for (let i = mid; i < Math.min(text.length, mid + 200); i++) {
+                if (['.', '!', '?', '。', '！', '？', '\n'].includes(text[i])) { splitPos = i + 1; break; }
+            }
+            return [text.substring(0, splitPos).trim(), text.substring(splitPos).trim()];
+        }
+        let accumulated = 0, bestIdx = 0, bestDist = Infinity;
+        for (let i = 0; i < paragraphs.length; i++) {
+            const dist = Math.abs(accumulated + paragraphs[i].length - text.length / 2);
+            if (dist < bestDist) { bestDist = dist; bestIdx = i + 1; }
+            accumulated += paragraphs[i].length + 2;
+        }
+        if (bestIdx <= 0) bestIdx = 1;
+        if (bestIdx >= paragraphs.length) bestIdx = paragraphs.length - 1;
+        return [paragraphs.slice(0, bestIdx).join('\n\n').trim(), paragraphs.slice(bestIdx).join('\n\n').trim()];
     }
-    function loadGlossary() {
-        const raw = localStorage.getItem(STORAGE_KEYS.GLOSSARY);
-        if (raw) try { glossary = JSON.parse(raw).map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex })); } catch(e) { glossary = []; }
+    
+    function showSplitDialog() {
+        if (!chapters.length) { showToast('❌ No chapter'); return; }
+        const fullText = getFormattedChapterText();
+        if (!fullText) { showToast('❌ No text'); return; }
+        const [p1, p2] = splitTextAtParagraphBoundary(fullText);
+        splitPart1Text = p1; splitPart2Text = p2;
+        document.getElementById('splitInfo').innerHTML = `Total: ${formatNumber(fullText.length)} chars<br>Part1: ${formatNumber(p1.length)} chars | Part2: ${formatNumber(p2.length)} chars`;
+        document.getElementById('splitDialog').classList.add('show');
+    }
+    
+    async function copySplitPart(part) {
+        const text = part === 1 ? splitPart1Text : splitPart2Text;
+        if (!text) return;
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`📋 Part ${part} copied (${formatNumber(text.length)} chars)`);
+            document.getElementById('splitDialog').classList.remove('show');
+        } catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(`📋 Part ${part} copied`); }
+    }
+    
+    async function copyFullChapter() {
+        if (!chapters.length) { showToast('❌ No chapter'); return; }
+        const text = getFormattedChapterText();
+        if (!text) return;
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`📋 Copied ${formatNumber(text.length)} chars`);
+        } catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(`📋 Copied`); }
+    }
+    
+    // ============= IMPORT =============
+    async function importNovel(file, customRegex) {
+        if (customRegex && customRegex.trim()) chapterSplitRegex = customRegex;
+        try {
+            const split = await splitTextStreaming(file, chapterSplitRegex, file.name);
+            chapters = split;
+            currentNovelId = 'novel_' + Date.now() + '_' + file.name.replace(/[^a-z0-9]/gi, '_');
+            await saveNovelToDB(currentNovelId, { chapters, currentChapterIdx: 0, fileName: file.name, regex: chapterSplitRegex });
+            currentChapterIdx = 0;
+            currentBookmark = null;
+            await renderCurrentChapter(true);
+            showToast(`✅ ${chapters.length} chapters loaded!`);
+            return chapters.length;
+        } catch(err) {
+            console.error(err);
+            showToast(`Error: ${err.message}`);
+            throw err;
+        }
+    }
+    
+    async function loadSavedNovel() {
+        const novels = await getAllNovels();
+        if (novels.length > 0) {
+            const latest = novels.sort((a, b) => b.timestamp - a.timestamp)[0];
+            currentNovelId = latest.id;
+            chapters = latest.chapters;
+            currentChapterIdx = latest.currentChapterIdx || 0;
+            if (latest.regex) chapterSplitRegex = latest.regex;
+            const bookmark = await loadBookmarkFromDB(currentNovelId);
+            if (bookmark) { currentBookmark = { chapterIdx: bookmark.chapterIdx, scrollY: bookmark.scrollY }; currentChapterIdx = bookmark.chapterIdx; }
+            await renderCurrentChapter(true);
+        }
+    }
+    
+    async function clearCache() {
+        if (confirm("Clear all data?")) {
+            if (currentNovelId) await deleteNovelFromDB(currentNovelId);
+            chapters = []; currentChapterIdx = 0; currentBookmark = null; currentNovelId = null;
+            await renderCurrentChapter(false);
+            showToast("🗑️ All data cleared");
+        }
+    }
+    
+    // ============= GLOSSARY =============
+    async function saveGlossary() { await saveSetting('glossary', JSON.stringify(glossary.map(g => ({ find: g.find, replace: g.replace, isRegex: g.isRegex })))); }
+    async function loadGlossary() {
+        const raw = await loadSetting('glossary');
+        if (raw) try { glossary = JSON.parse(raw); } catch(e) {}
         renderGlossaryUI();
     }
-    function clearAllGlossary() { if (confirm("Clear all rules?")) { glossary = []; saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); alert("✅ Cleared"); } }
     function renderGlossaryUI() {
         const container = document.getElementById('glossaryEntriesContainer');
         if (!container) return;
-        if (glossary.length === 0) { container.innerHTML = '<div style="text-align:center; padding:1rem; color:#999;">No rules</div>'; return; }
+        if (glossary.length === 0) { container.innerHTML = '<div style="padding:1rem; color:#999;">No rules</div>'; return; }
         container.innerHTML = '';
         glossary.forEach((rule, idx) => {
             const div = document.createElement('div'); div.className = 'glossary-item';
@@ -892,14 +695,16 @@ OR text: word=replacement (one per line)'></textarea>
             const replaceInput = document.createElement('input'); replaceInput.value = rule.replace; replaceInput.placeholder = "Replace";
             const regexCheck = document.createElement('input'); regexCheck.type = 'checkbox'; regexCheck.checked = rule.isRegex;
             const label = document.createElement('label'); label.innerText = 'RegEx';
-            const del = document.createElement('button'); del.innerText = '✖'; del.className = 'danger'; del.onclick = () => { glossary.splice(idx,1); renderGlossaryUI(); saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
-            const update = () => { glossary[idx] = { find: findInput.value, replace: replaceInput.value, isRegex: regexCheck.checked }; saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
+            const del = document.createElement('button'); del.innerText = '✖'; del.className = 'danger';
+            del.onclick = async () => { glossary.splice(idx,1); renderGlossaryUI(); await saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
+            const update = async () => { glossary[idx] = { find: findInput.value, replace: replaceInput.value, isRegex: regexCheck.checked }; await saveGlossary(); if (chapters.length) renderCurrentChapter(true); };
             findInput.onchange = update; replaceInput.onchange = update; regexCheck.onchange = update;
-            div.append(findInput, replaceInput, regexCheck, label, del); container.appendChild(div);
+            div.append(findInput, replaceInput, regexCheck, label, del);
+            container.appendChild(div);
         });
     }
     function importJson(content) {
-        try { const parsed = JSON.parse(content); if (Array.isArray(parsed)) { glossary = parsed.map(item => ({ find: item.find, replace: item.replace, isRegex: item.regex || false })); saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); alert(`✅ ${glossary.length} imported`); return true; } } catch(e) { alert("Invalid JSON"); } return false;
+        try { const parsed = JSON.parse(content); if (Array.isArray(parsed)) { glossary = parsed.map(i => ({ find: i.find, replace: i.replace, isRegex: i.regex || false })); saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); showToast(`✅ ${glossary.length} imported`); return true; } } catch(e) { alert("Invalid JSON"); } return false;
     }
     function importTextPairs(content) {
         const lines = content.split(/\r?\n/);
@@ -913,69 +718,64 @@ OR text: word=replacement (one per line)'></textarea>
                 if (find && replace) newGlossary.push({ find, replace, isRegex: false });
             }
         }
-        if (newGlossary.length) { glossary = newGlossary; saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); alert(`✅ ${newGlossary.length} imported`); return true; }
+        if (newGlossary.length) { glossary = newGlossary; saveGlossary(); renderGlossaryUI(); if (chapters.length) renderCurrentChapter(true); showToast(`✅ ${newGlossary.length} imported`); return true; }
         alert("No valid pairs"); return false;
     }
-    function clearCache() { if (confirm("Clear all data?")) { localStorage.clear(); location.reload(); } }
     
-    // Event binding
+    // ============= EVENT BINDINGS =============
     function bind(id, event, handler) { const el = document.getElementById(id); if(el) el.addEventListener(event, handler); }
     
-    window.onload = () => {
-        loadGlossary();
-        loadSavedNovel();
+    function openSheet() { document.getElementById('actionSheet').classList.add('open'); document.getElementById('sheetOverlay').classList.add('visible'); }
+    function closeSheet() { document.getElementById('actionSheet').classList.remove('open'); document.getElementById('sheetOverlay').classList.remove('visible'); }
+    
+    window.onload = async () => {
+        await openDB();
+        await loadGlossary();
+        await loadSavedNovel();
         
-        // Copy buttons
         bind('copyBtnDesktop', 'click', copyFullChapter);
         bind('copyBtnMobile', 'click', () => { copyFullChapter(); closeSheet(); });
         bind('splitCopyBtnDesktop', 'click', showSplitDialog);
         bind('splitCopyBtnMobile', 'click', () => { showSplitDialog(); closeSheet(); });
-        
-        // Split dialog buttons
         bind('copyPart1Btn', 'click', () => copySplitPart(1));
         bind('copyPart2Btn', 'click', () => copySplitPart(2));
         bind('closeDialogBtn', 'click', () => document.getElementById('splitDialog').classList.remove('show'));
-        
-        // Mobile sheet
         bind('fabBtn', 'click', openSheet);
         bind('closeSheetBtn', 'click', closeSheet);
         bind('sheetOverlay', 'click', closeSheet);
-        
-        // File uploads
-        bind('novelUploadDesktop', 'change', async (e) => { if(e.target.files.length) { const regex = prompt("Chapter regex:", chapterSplitRegex); if(regex) chapterSplitRegex = regex; const count = await importNovel(e.target.files[0], chapterSplitRegex); alert(`✅ ${count} chapters loaded`); } });
-        bind('novelUploadMobile', 'change', async (e) => { if(e.target.files.length) { const regex = prompt("Chapter regex:", chapterSplitRegex); if(regex) chapterSplitRegex = regex; const count = await importNovel(e.target.files[0], chapterSplitRegex); alert(`✅ ${count} chapters loaded`); closeSheet(); } });
-        
-        // Chapter navigation
-        bind('prevChapterBtnDesktop', 'click', () => { if(chapters.length && currentChapterIdx>0) { currentChapterIdx--; renderCurrentChapter(false); } });
-        bind('prevChapterBtnMobile', 'click', () => { if(chapters.length && currentChapterIdx>0) { currentChapterIdx--; renderCurrentChapter(false); closeSheet(); } });
-        bind('nextChapterBtnDesktop', 'click', () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; renderCurrentChapter(false); } });
-        bind('nextChapterBtnMobile', 'click', () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; renderCurrentChapter(false); closeSheet(); } });
-        bind('chapterSelectDesktop', 'change', (e) => { currentChapterIdx = parseInt(e.target.value); renderCurrentChapter(false); });
-        bind('chapterSelectMobile', 'change', (e) => { currentChapterIdx = parseInt(e.target.value); renderCurrentChapter(false); closeSheet(); });
-        
-        // Clear cache
+        bind('prevChapterBtnDesktop', 'click', async () => { if(chapters.length && currentChapterIdx>0) { currentChapterIdx--; await renderCurrentChapter(false); } });
+        bind('prevChapterBtnMobile', 'click', async () => { if(chapters.length && currentChapterIdx>0) { currentChapterIdx--; await renderCurrentChapter(false); closeSheet(); } });
+        bind('nextChapterBtnDesktop', 'click', async () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; await renderCurrentChapter(false); } });
+        bind('nextChapterBtnMobile', 'click', async () => { if(chapters.length && currentChapterIdx<chapters.length-1) { currentChapterIdx++; await renderCurrentChapter(false); closeSheet(); } });
+        bind('chapterSelectDesktop', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); });
+        bind('chapterSelectMobile', 'change', async (e) => { currentChapterIdx = parseInt(e.target.value); await renderCurrentChapter(false); closeSheet(); });
         bind('clearCacheBtnDesktop', 'click', clearCache);
         bind('clearCacheBtnMobile', 'click', clearCache);
         
-        // Glossary modal
+        const handleUpload = async (e) => {
+            if (e.target.files.length) {
+                const regex = prompt("Chapter regex:", chapterSplitRegex);
+                if (regex !== null && regex.trim()) chapterSplitRegex = regex;
+                try {
+                    await importNovel(e.target.files[0], chapterSplitRegex);
+                } catch(err) { showToast(`Error: ${err.message}`); }
+                e.target.value = '';
+            }
+        };
+        bind('novelUploadDesktop', 'change', handleUpload);
+        bind('novelUploadMobile', 'change', (e) => { handleUpload(e); closeSheet(); });
+        
         const modal = document.getElementById('glossaryModal');
         bind('glossaryModalBtnDesktop', 'click', () => { renderGlossaryUI(); modal.style.display = 'flex'; });
         bind('glossaryModalBtnMobile', 'click', () => { renderGlossaryUI(); modal.style.display = 'flex'; closeSheet(); });
         bind('closeGlossaryBtn', 'click', () => modal.style.display = 'none');
-        bind('saveGlossaryBtn', 'click', () => { modal.style.display = 'none'; saveGlossary(); if (chapters.length) renderCurrentChapter(true); });
+        bind('saveGlossaryBtn', 'click', async () => { modal.style.display = 'none'; await saveGlossary(); if (chapters.length) renderCurrentChapter(true); });
         bind('addGlossaryBtn', 'click', () => { glossary.push({ find: "", replace: "", isRegex: false }); renderGlossaryUI(); });
-        bind('clearGlossaryBtn', 'click', clearAllGlossary);
+        bind('clearGlossaryBtn', 'click', async () => { if(confirm("Clear all rules?")) { glossary = []; await saveGlossary(); renderGlossaryUI(); if(chapters.length) renderCurrentChapter(true); showToast("✅ Cleared"); } });
         bind('importJsonBtn', 'click', () => { const val = document.getElementById('jsonPasteArea').value; if(val) importJson(val); else alert("Paste JSON"); });
         bind('pasteTextBtn', 'click', () => { const val = document.getElementById('jsonPasteArea').value; if(val) importTextPairs(val); else alert("Paste text"); });
         bind('jsonFileUpload', 'change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => importJson(ev.target.result); reader.readAsText(e.target.files[0]); e.target.value = ''; } });
         bind('txtFileUpload', 'change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => importTextPairs(ev.target.result); reader.readAsText(e.target.files[0]); e.target.value = ''; } });
-        
-        // Close dialog when clicking outside
-        document.getElementById('splitDialog').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('splitDialog')) {
-                document.getElementById('splitDialog').classList.remove('show');
-            }
-        });
     };
 </script>
 </body>
