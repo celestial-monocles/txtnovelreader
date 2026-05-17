@@ -29,6 +29,10 @@
             --modal-text: #2c3e66;
             --input-border: #ccc;
             --import-bg: #f5f5f5;
+            --regex-input-bg: #fff;
+            --regex-input-text: #333;
+            --preview-text: #333;
+            --preview-bg: #f5f5f5;
         }
         
         body.dark {
@@ -50,6 +54,10 @@
             --modal-text: #ffd93d;
             --input-border: #444;
             --import-bg: #252535;
+            --regex-input-bg: #2a2a3a;
+            --regex-input-text: #e2e2e2;
+            --preview-text: #e2e2e2;
+            --preview-bg: #2a2a3a;
         }
         
         body {
@@ -122,6 +130,179 @@
         .desktop-toolbar .status-badge { background: var(--status-bg); cursor: default; }
         .desktop-toolbar input[type="file"] { background: var(--toolbar-button); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
         
+        /* Regex editor panel - embedded in toolbar */
+        .regex-editor-panel {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .regex-toggle-btn {
+            background: var(--split-btn);
+            transition: all 0.2s;
+        }
+        
+        .regex-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--modal-bg);
+            color: var(--text-color);
+            border-radius: 16px;
+            min-width: 380px;
+            max-width: 550px;
+            width: max-content;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+        
+        .regex-dropdown.show {
+            display: block;
+        }
+        
+        .regex-dropdown-header {
+            padding: 12px 16px;
+            font-weight: bold;
+            border-bottom: 2px solid var(--border-color);
+            background: var(--toolbar-bg);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .regex-dropdown-body {
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .regex-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--input-border);
+        }
+        
+        .preset-chip {
+            background: var(--toolbar-button);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-chip:hover {
+            background: var(--toolbar-button-hover);
+            color: #1e1f2a;
+        }
+        
+        .regex-patterns-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+        
+        .regex-pattern-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .regex-pattern-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            background: var(--regex-input-bg);
+            color: var(--regex-input-text);
+        }
+        
+        .remove-pattern-btn {
+            background: var(--danger-btn);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-pattern-btn {
+            background: var(--success-btn);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        
+        .clear-patterns-btn {
+            background: var(--danger-btn);
+            margin-top: 8px;
+        }
+        
+        .split-preview-mini {
+            background: var(--preview-bg);
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--input-border);
+            color: var(--preview-text);
+        }
+        
+        .split-preview-mini strong {
+            color: var(--preview-text);
+        }
+        
+        .split-preview-item {
+            padding: 8px;
+            margin: 6px 0;
+            border-left: 3px solid var(--border-color);
+            background: var(--toolbar-button);
+            color: white;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .apply-split-btn {
+            background: var(--success-btn);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        
+        .apply-split-btn:hover {
+            opacity: 0.9;
+        }
+        
         .mobile-fab {
             position: fixed;
             bottom: 16px;
@@ -152,7 +333,7 @@
             transform: translateY(100%);
             transition: transform 0.3s ease-out;
             z-index: 200;
-            max-height: 70vh;
+            max-height: 80vh;
             overflow-y: auto;
         }
         .action-sheet.open { transform: translateY(0); }
@@ -292,8 +473,40 @@
         .modal button.danger { background: var(--danger-btn); }
         .modal button.success { background: var(--success-btn); }
         
-        @media (max-width: 767px) { .desktop-toolbar { display: none; } }
-        @media (min-width: 768px) { .mobile-fab, .action-sheet, .sheet-overlay { display: none; } }
+        /* Mobile regex panel */
+        .mobile-regex-panel {
+            margin-top: 8px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+        
+        /* Mobile-specific text styles for better readability */
+        .mobile-regex-panel .split-preview-mini {
+            background: var(--preview-bg);
+            color: var(--preview-text);
+            font-size: 13px;
+        }
+        
+        .mobile-regex-panel .split-preview-mini strong {
+            color: var(--preview-text);
+            font-weight: bold;
+        }
+        
+        .mobile-regex-panel .split-preview-item {
+            background: var(--toolbar-button);
+            color: white;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 767px) { 
+            .desktop-toolbar { display: none; }
+            .split-preview-mini {
+                font-size: 13px;
+            }
+        }
+        @media (min-width: 768px) { 
+            .mobile-fab, .action-sheet, .sheet-overlay { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -304,8 +517,40 @@
     <button id="prevChapterBtnDesktop">◀</button>
     <select id="chapterSelectDesktop" class="chapter-select"></select>
     <button id="nextChapterBtnDesktop">▶</button>
+    
+    <!-- Regex Chapter Splitter -->
+    <div class="regex-editor-panel">
+        <button id="regexToggleBtn" class="regex-toggle-btn">📑 Regex Split</button>
+        <div id="regexDropdown" class="regex-dropdown">
+            <div class="regex-dropdown-header">
+                <span>📑 Split Novel into Chapters (Regex)</span>
+                <button id="closeRegexDropdown" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div class="regex-dropdown-body">
+                <div class="regex-presets">
+                    <span class="preset-chip" data-pattern="^t\d+회$">t1회</span>
+                    <span class="preset-chip" data-pattern="^\d+회$">1회</span>
+                    <span class="preset-chip" data-pattern="^제\d+화$">제1화</span>
+                    <span class="preset-chip" data-pattern="^\d+화$">1화</span>
+                    <span class="preset-chip" data-pattern="^제\d+장$">제1장</span>
+                    <span class="preset-chip" data-pattern="^\d+장$">1장</span>
+                    <span class="preset-chip" data-pattern="^Episode \d+">Episode 1</span>
+                    <span class="preset-chip" data-pattern="^Chapter \d+">Chapter 1</span>
+                    <span class="preset-chip" data-pattern="^\d+$">Just numbers</span>
+                </div>
+                <div class="regex-patterns-list" id="regexPatternsList"></div>
+                <button class="add-pattern-btn" id="addPatternBtn">+ Add Pattern</button>
+                <button class="add-pattern-btn clear-patterns-btn" id="clearPatternsBtn">🗑️ Clear All Patterns</button>
+                <div id="splitPreviewMini" class="split-preview-mini">
+                    <em>Enter patterns to preview splits</em>
+                </div>
+                <button class="apply-split-btn" id="applySplitBtn">✂️ Apply Split to Current Novel</button>
+            </div>
+        </div>
+    </div>
+    
     <button id="copyBtnDesktop" class="copy-btn">📋 Copy</button>
-    <button id="splitCopyBtnDesktop" class="split-btn">✂️ Split</button>
+    <button id="splitCopyBtnDesktop" class="split-btn">✂️ Split-Copy</button>
     <button id="darkModeBtnDesktop" class="dark-mode-btn">🌙 Dark</button>
     <button id="glossaryModalBtnDesktop">✏️ Glossary</button>
     <button id="clearCacheBtnDesktop" class="clear-cache">🗑️ Clear</button>
@@ -321,20 +566,35 @@
     <div class="action-sheet-content">
         <div class="action-row"><label class="file-label-mobile">📂 Upload <input type="file" id="novelUploadMobile" accept=".txt,.doc,.docx" style="display:none;"></label></div>
         <div class="action-row"><button id="prevChapterBtnMobile" class="action-btn">◀</button><select id="chapterSelectMobile" class="chapter-select-mobile"></select><button id="nextChapterBtnMobile" class="action-btn">▶</button></div>
-        <div class="action-row"><button id="copyBtnMobile" class="action-btn copy">📋 Copy</button><button id="splitCopyBtnMobile" class="action-btn split">✂️ Split</button></div>
+        <div class="action-row">
+            <button id="copyBtnMobile" class="action-btn copy">📋 Copy</button>
+            <button id="splitCopyBtnMobile" class="action-btn split">✂️ Split-Copy</button>
+        </div>
         <div class="action-row"><button id="darkModeBtnMobile" class="action-btn dark">🌙 Dark</button><button id="glossaryModalBtnMobile" class="action-btn">✏️ Glossary</button></div>
         <div class="action-row"><button id="clearCacheBtnMobile" class="action-btn danger">🗑️ Clear</button><div class="status-badge-mobile" id="bookmarkStatusMobile">📌</div></div>
+        
+        <!-- Mobile regex panel -->
+        <div class="mobile-regex-panel">
+            <div style="margin-bottom: 10px; font-weight: bold; text-align: center;">📑 Regex Chapter Split</div>
+            <div class="regex-presets" id="mobileRegexPresets"></div>
+            <div class="regex-patterns-list" id="mobileRegexPatternsList"></div>
+            <button class="add-pattern-btn" id="mobileAddPatternBtn">+ Add Pattern</button>
+            <button class="add-pattern-btn clear-patterns-btn" id="mobileClearPatternsBtn">🗑️ Clear All</button>
+            <div id="mobileSplitPreview" class="split-preview-mini"></div>
+            <button class="apply-split-btn" id="mobileApplySplitBtn">📑 Apply Regex Split</button>
+        </div>
     </div>
 </div>
 
+<!-- Split-Copy Dialog (2-part split) -->
 <div id="splitDialog" class="split-dialog">
-    <h3>✂️ Split Chapter</h3>
+    <h3>✂️ Split Current Chapter into 2 Parts</h3>
     <p id="splitInfo"></p>
-    <div class="split-buttons"><button id="copyPart1Btn" class="part1">📋 Part 1</button><button id="copyPart2Btn" class="part2">📋 Part 2</button></div>
+    <div class="split-buttons"><button id="copyPart1Btn" class="part1">📋 Copy Part 1</button><button id="copyPart2Btn" class="part2">📋 Copy Part 2</button></div>
     <button id="closeDialogBtn" class="close-dialog">Cancel</button>
 </div>
 
-<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Auto-caches and reloads on refresh!<br>✅ Remembers your last chapter and scroll position</div></div></div>
+<div class="reader-container" id="readerContainer"><div id="reader-content"><div style="text-align:center; padding:2rem;">📚 Load TXT file<br>✅ Auto-caches and reloads on refresh!<br>✅ Remembers your last chapter and scroll position<br>✅ <strong>Regex Split</strong>: Split entire novel by chapter markers<br>✅ <strong>Split-Copy</strong>: Split current chapter into 2 parts</div></div></div>
 
 <div id="toast" class="toast"></div>
 <div id="loadingIndicator" class="loading-indicator">📖 Loading...</div>
@@ -368,12 +628,234 @@
     let chapterSplitRegex = "(\\d+\\s*[화話章节]\\s*[^\\n]{0,50})";
     let splitPart1Text = "", splitPart2Text = "";
     let currentFileData = null;
+    let currentFullText = '';
+    let currentRegexPatterns = ['^t\\d+회$']; // Default patterns
     
     // Storage keys
     const CACHE_PREFIX = 'novelReaderCache_';
     const BOOKMARK_KEY = 'novelReaderBookmark';
     const SETTINGS_KEY = 'novelReaderSettings';
     const GLOSSARY_KEY = 'novelReaderGlossary';
+    const PATTERNS_STORAGE_KEY = 'novelReaderPatterns';
+    
+    // ============= PATTERN MANAGEMENT =============
+    function savePatternsToStorage() {
+        try {
+            localStorage.setItem(PATTERNS_STORAGE_KEY, JSON.stringify(currentRegexPatterns));
+        } catch(e) {
+            console.warn('Could not save patterns:', e);
+        }
+    }
+    
+    function loadPatternsFromStorage() {
+        try {
+            const saved = localStorage.getItem(PATTERNS_STORAGE_KEY);
+            if (saved) {
+                currentRegexPatterns = JSON.parse(saved);
+                return true;
+            }
+        } catch(e) {
+            console.warn('Could not load patterns:', e);
+        }
+        return false;
+    }
+    
+    function renderPatternsList(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        currentRegexPatterns.forEach((pattern, idx) => {
+            const row = document.createElement('div');
+            row.className = 'regex-pattern-row';
+            row.innerHTML = `
+                <input type="text" class="pattern-input" value="${pattern.replace(/"/g, '&quot;')}" placeholder="Enter regex...">
+                <button class="remove-pattern-btn" data-index="${idx}">✕</button>
+            `;
+            container.appendChild(row);
+            
+            const input = row.querySelector('.pattern-input');
+            input.addEventListener('input', function() {
+                currentRegexPatterns[idx] = this.value;
+                savePatternsToStorage();
+                updateSplitPreview();
+            });
+            
+            const removeBtn = row.querySelector('.remove-pattern-btn');
+            removeBtn.addEventListener('click', function() {
+                currentRegexPatterns.splice(idx, 1);
+                if (currentRegexPatterns.length === 0) {
+                    currentRegexPatterns.push('');
+                }
+                savePatternsToStorage();
+                renderPatternsList(containerId);
+                renderPatternsList('mobileRegexPatternsList');
+                updateSplitPreview();
+            });
+        });
+    }
+    
+    function addPattern() {
+        currentRegexPatterns.push('');
+        savePatternsToStorage();
+        renderPatternsList('regexPatternsList');
+        renderPatternsList('mobileRegexPatternsList');
+        updateSplitPreview();
+    }
+    
+    function clearAllPatterns() {
+        if (confirm('Clear all regex patterns?')) {
+            currentRegexPatterns = ['^t\\d+회$'];
+            savePatternsToStorage();
+            renderPatternsList('regexPatternsList');
+            renderPatternsList('mobileRegexPatternsList');
+            updateSplitPreview();
+            showToast('Patterns reset to default');
+        }
+    }
+    
+    function addPresetPattern(pattern) {
+        currentRegexPatterns.push(pattern);
+        savePatternsToStorage();
+        renderPatternsList('regexPatternsList');
+        renderPatternsList('mobileRegexPatternsList');
+        updateSplitPreview();
+    }
+    
+    function getAllPatterns() {
+        return currentRegexPatterns.filter(p => p && p.trim());
+    }
+    
+    function splitTextByPatterns(text, patterns) {
+        if (!text || patterns.length === 0) return [text];
+        
+        const lines = text.split('\n');
+        const chapterMarkers = [];
+        
+        lines.forEach((line, index) => {
+            for (const pattern of patterns) {
+                try {
+                    const regex = new RegExp(pattern, 'gm');
+                    if (regex.test(line)) {
+                        chapterMarkers.push({ lineIndex: index, text: line });
+                        break;
+                    }
+                } catch(e) {
+                    // Invalid regex, skip
+                }
+            }
+        });
+        
+        if (chapterMarkers.length === 0) return [text];
+        
+        const newChapters = [];
+        let currentChapter = [];
+        let markerIndex = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            if (markerIndex < chapterMarkers.length && i === chapterMarkers[markerIndex].lineIndex) {
+                if (currentChapter.length > 0) {
+                    newChapters.push(currentChapter.join('\n'));
+                }
+                currentChapter = [lines[i]];
+                markerIndex++;
+            } else {
+                if (currentChapter.length > 0 || newChapters.length === 0) {
+                    currentChapter.push(lines[i]);
+                }
+            }
+        }
+        
+        if (currentChapter.length > 0) {
+            newChapters.push(currentChapter.join('\n'));
+        }
+        
+        return newChapters.length > 0 ? newChapters : [text];
+    }
+    
+    function updateSplitPreview() {
+        const textToSplit = currentFullText || (chapters.length ? chapters.map(c => c.originalText).join('\n\n') : '');
+        if (!textToSplit) {
+            const previewDivs = ['splitPreviewMini', 'mobileSplitPreview'];
+            previewDivs.forEach(id => {
+                const div = document.getElementById(id);
+                if (div) div.innerHTML = '<em>Load a novel first</em>';
+            });
+            return;
+        }
+        
+        const patterns = getAllPatterns();
+        if (patterns.length === 0) {
+            const previewDivs = ['splitPreviewMini', 'mobileSplitPreview'];
+            previewDivs.forEach(id => {
+                const div = document.getElementById(id);
+                if (div) div.innerHTML = '<em>Add at least one pattern</em>';
+            });
+            return;
+        }
+        
+        try {
+            const splitChapters = splitTextByPatterns(textToSplit, patterns);
+            const previewHtml = `<strong>📊 Will create ${splitChapters.length} chapters</strong><br><br>` +
+                splitChapters.slice(0, 5).map((ch, i) => {
+                    const firstLine = ch.split('\n')[0];
+                    return `<div class="split-preview-item">Ch ${i+1}: ${firstLine.substring(0, 50)}${firstLine.length > 50 ? '...' : ''}</div>`;
+                }).join('') +
+                (splitChapters.length > 5 ? `<div style="margin-top: 8px; opacity: 0.8;">... and ${splitChapters.length - 5} more chapters</div>` : '');
+            
+            const previewDivs = ['splitPreviewMini', 'mobileSplitPreview'];
+            previewDivs.forEach(id => {
+                const div = document.getElementById(id);
+                if (div) div.innerHTML = previewHtml;
+            });
+            
+            window.previewSplitChapters = splitChapters;
+        } catch(error) {
+            const previewDivs = ['splitPreviewMini', 'mobileSplitPreview'];
+            previewDivs.forEach(id => {
+                const div = document.getElementById(id);
+                if (div) div.innerHTML = `<span style="color: var(--danger-btn);">⚠️ Error: ${error.message}</span>`;
+            });
+        }
+    }
+    
+    function applySplitToNovel() {
+        if (!chapters.length && !currentFullText) {
+            showToast('No novel loaded!');
+            return;
+        }
+        
+        const patterns = getAllPatterns();
+        if (patterns.length === 0) {
+            showToast('Add at least one regex pattern first');
+            return;
+        }
+        
+        const textToSplit = currentFullText || chapters.map(c => c.originalText).join('\n\n');
+        const newChaptersArray = splitTextByPatterns(textToSplit, patterns);
+        
+        if (newChaptersArray.length === chapters.length) {
+            if (!confirm('No changes detected. Apply anyway?')) return;
+        }
+        
+        chapters = newChaptersArray.map((text, idx) => ({
+            title: text.split('\n')[0]?.substring(0, 50) || `Chapter ${idx + 1}`,
+            originalText: text
+        }));
+        
+        currentChapterIdx = 0;
+        rebuildFullText();
+        renderCurrentChapter(false);
+        updateSelectors();
+        saveBookmark();
+        
+        if (currentFileData) {
+            cacheChapters(currentFileData, chapters, chapterSplitRegex);
+        }
+        
+        showToast(`✅ Split into ${chapters.length} chapters!`);
+        document.getElementById('regexDropdown').classList.remove('show');
+    }
     
     // ============= FILE CACHING =============
     function simpleHash(str) {
@@ -400,12 +882,8 @@
         };
         try {
             localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-            console.log("Cached:", chaptersData.length, "chapters");
             return true;
-        } catch(e) {
-            console.warn("Cache failed (file too large):", e);
-            return false;
-        }
+        } catch(e) { return false; }
     }
     
     function getCachedChapters(fileData) {
@@ -421,7 +899,11 @@
         return null;
     }
     
-    // ============= BOOKMARK (position persistence) =============
+    function rebuildFullText() {
+        currentFullText = chapters.map(ch => ch.originalText).join('\n\n');
+    }
+    
+    // ============= BOOKMARK =============
     function saveBookmark() {
         if (!chapters.length || !currentFileData) return;
         const scrollY = document.querySelector('.reader-container')?.scrollTop || 0;
@@ -436,7 +918,6 @@
         };
         localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmark));
         updateStatus();
-        console.log("Bookmark saved:", currentChapterIdx, "scroll:", scrollY);
     }
     
     function restorePositionFromBookmark() {
@@ -444,27 +925,20 @@
         if (!saved || !currentFileData || !chapters.length) return false;
         try {
             const bookmark = JSON.parse(saved);
-            // Check if bookmark matches current file
             if (bookmark.fileName === currentFileData.name && 
                 bookmark.fileSize === currentFileData.size) {
                 const targetChapter = Math.min(bookmark.chapterIdx, chapters.length - 1);
                 if (targetChapter !== currentChapterIdx) {
                     currentChapterIdx = targetChapter;
                     currentBookmark = { chapterIdx: targetChapter, scrollY: bookmark.scrollY || 0 };
-                    console.log("Position restored to chapter:", targetChapter);
                     return true;
                 } else if (bookmark.scrollY) {
                     currentBookmark = { chapterIdx: currentChapterIdx, scrollY: bookmark.scrollY };
-                    console.log("Scroll restored to:", bookmark.scrollY);
                     return true;
                 }
             }
         } catch(e) {}
         return false;
-    }
-    
-    function clearAllBookmarks() {
-        localStorage.removeItem(BOOKMARK_KEY);
     }
     
     // ============= DARK MODE =============
@@ -630,7 +1104,6 @@
             setTimeout(() => {
                 const container = document.querySelector('.reader-container');
                 if (container) container.scrollTop = currentBookmark.scrollY;
-                console.log("Scroll restored to:", currentBookmark.scrollY);
             }, 100);
         } else {
             document.querySelector('.reader-container').scrollTop = 0;
@@ -673,9 +1146,7 @@
         if (mobileStatus) mobileStatus.innerText = text;
     }
     
-    // ============= COPY & SPLIT =============
-    function getFormattedChapterText() { return getCurrentChapterText(); }
-    
+    // ============= SPLIT-COPY (2-part split) =============
     function splitTextAtParagraphBoundary(text) {
         if (!text) return ["", ""];
         const paragraphs = text.split(/\n\s*\n/);
@@ -699,12 +1170,12 @@
     }
     
     function showSplitDialog() {
-        if (!chapters.length) { showToast('❌ No chapter'); return; }
-        const fullText = getFormattedChapterText();
-        if (!fullText) { showToast('❌ No text'); return; }
+        if (!chapters.length) { showToast('❌ No chapter loaded'); return; }
+        const fullText = getCurrentChapterText();
+        if (!fullText) { showToast('❌ No text in this chapter'); return; }
         const [p1, p2] = splitTextAtParagraphBoundary(fullText);
         splitPart1Text = p1; splitPart2Text = p2;
-        document.getElementById('splitInfo').innerHTML = `Total: ${formatNumber(fullText.length)} chars<br>Part1: ${formatNumber(p1.length)} chars | Part2: ${formatNumber(p2.length)} chars`;
+        document.getElementById('splitInfo').innerHTML = `Total: ${formatNumber(fullText.length)} chars<br>Part 1: ${formatNumber(p1.length)} chars | Part 2: ${formatNumber(p2.length)} chars`;
         document.getElementById('splitDialog').classList.add('show');
     }
     
@@ -715,17 +1186,33 @@
             await navigator.clipboard.writeText(text);
             showToast(`📋 Part ${part} copied (${formatNumber(text.length)} chars)`);
             document.getElementById('splitDialog').classList.remove('show');
-        } catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(`📋 Part ${part} copied`); }
+        } catch { 
+            const ta = document.createElement('textarea'); 
+            ta.value = text; 
+            document.body.appendChild(ta); 
+            ta.select(); 
+            document.execCommand('copy'); 
+            document.body.removeChild(ta); 
+            showToast(`📋 Part ${part} copied`); 
+        }
     }
     
     async function copyFullChapter() {
         if (!chapters.length) { showToast('❌ No chapter'); return; }
-        const text = getFormattedChapterText();
+        const text = getCurrentChapterText();
         if (!text) return;
         try {
             await navigator.clipboard.writeText(text);
             showToast(`📋 Copied ${formatNumber(text.length)} chars`);
-        } catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(`📋 Copied`); }
+        } catch { 
+            const ta = document.createElement('textarea'); 
+            ta.value = text; 
+            document.body.appendChild(ta); 
+            ta.select(); 
+            document.execCommand('copy'); 
+            document.body.removeChild(ta); 
+            showToast(`📋 Copied`); 
+        }
     }
     
     // ============= IMPORT =============
@@ -738,17 +1225,15 @@
             lastModified: file.lastModified
         };
         
-        // Check cache first
         const cached = getCachedChapters(fileData);
         
         if (cached) {
             chapters = cached.chapters;
             if (cached.regex) chapterSplitRegex = cached.regex;
             currentFileData = fileData;
+            rebuildFullText();
             
-            // Restore position from bookmark
             const positionRestored = restorePositionFromBookmark();
-            
             await renderCurrentChapter(true);
             hideLoading();
             if (positionRestored) {
@@ -756,21 +1241,19 @@
             } else {
                 showToast(`📖 ${chapters.length} chapters loaded from cache`);
             }
+            updateSplitPreview();
             return chapters.length;
         }
         
-        // Not cached - process file
         try {
             const split = await splitTextStreaming(file, chapterSplitRegex);
             chapters = split;
             currentFileData = fileData;
+            rebuildFullText();
             
-            // Cache the processed chapters
             cacheChapters(currentFileData, chapters, chapterSplitRegex);
             
-            // Try to restore position (in case we're re-uploading the same file)
             const positionRestored = restorePositionFromBookmark();
-            
             await renderCurrentChapter(true);
             hideLoading();
             if (positionRestored) {
@@ -778,6 +1261,7 @@
             } else {
                 showToast(`✅ ${chapters.length} chapters loaded and cached!`);
             }
+            updateSplitPreview();
             return chapters.length;
         } catch(err) {
             hideLoading();
@@ -786,7 +1270,6 @@
         }
     }
     
-    // Auto-restore on page load (from cache + bookmark)
     async function tryAutoRestore() {
         const savedBookmark = localStorage.getItem(BOOKMARK_KEY);
         if (!savedBookmark) return false;
@@ -808,9 +1291,11 @@
                     };
                     currentChapterIdx = Math.min(bookmark.chapterIdx, chapters.length - 1);
                     currentBookmark = { chapterIdx: currentChapterIdx, scrollY: bookmark.scrollY || 0 };
+                    rebuildFullText();
                     
                     await renderCurrentChapter(true);
                     showToast(`📖 Restored ${chapters.length} chapters - Chapter ${currentChapterIdx + 1}`);
+                    updateSplitPreview();
                     return true;
                 }
             }
@@ -833,8 +1318,10 @@
             currentChapterIdx = 0;
             currentBookmark = null;
             currentFileData = null;
+            currentFullText = '';
             renderCurrentChapter(false);
             showToast("🗑️ Cache cleared");
+            updateSplitPreview();
         }
     }
     
@@ -897,14 +1384,41 @@
     
     // ============= INIT =============
     window.onload = async () => {
-        console.log("Page loaded - checking for cached novel...");
         loadDarkModePreference();
         loadGlossary();
+        
+        // Load saved patterns
+        loadPatternsFromStorage();
         
         // Try to auto-restore from cache + bookmark
         const restored = await tryAutoRestore();
         if (!restored) {
             await renderCurrentChapter(false);
+        }
+        
+        // Initialize pattern UI
+        renderPatternsList('regexPatternsList');
+        renderPatternsList('mobileRegexPatternsList');
+        
+        // Setup preset chips
+        document.querySelectorAll('.preset-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const pattern = chip.getAttribute('data-pattern');
+                if (pattern) addPresetPattern(pattern);
+            });
+        });
+        
+        // Mobile preset chips
+        const mobilePresetsContainer = document.getElementById('mobileRegexPresets');
+        if (mobilePresetsContainer) {
+            const presets = ['^t\\d+회$', '^\\d+회$', '^제\\d+화$', '^Episode \\d+', '^Chapter \\d+'];
+            mobilePresetsContainer.innerHTML = presets.map(p => `<span class="preset-chip" data-pattern="${p.replace(/"/g, '&quot;')}">${p.substring(0, 15)}</span>`).join('');
+            mobilePresetsContainer.querySelectorAll('.preset-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const pattern = chip.getAttribute('data-pattern');
+                    if (pattern) addPresetPattern(pattern);
+                });
+            });
         }
         
         // Bind events
@@ -929,10 +1443,41 @@
         bind('clearCacheBtnDesktop', 'click', clearAllCache);
         bind('clearCacheBtnMobile', 'click', clearAllCache);
         
+        // Regex dropdown toggle
+        const regexToggle = document.getElementById('regexToggleBtn');
+        const regexDropdown = document.getElementById('regexDropdown');
+        const closeRegex = document.getElementById('closeRegexDropdown');
+        
+        if (regexToggle) {
+            regexToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                regexDropdown.classList.toggle('show');
+                updateSplitPreview();
+            });
+        }
+        
+        if (closeRegex) {
+            closeRegex.addEventListener('click', () => {
+                regexDropdown.classList.remove('show');
+            });
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (regexDropdown && regexToggle && !regexDropdown.contains(e.target) && !regexToggle.contains(e.target)) {
+                regexDropdown.classList.remove('show');
+            }
+        });
+        
+        bind('addPatternBtn', 'click', addPattern);
+        bind('mobileAddPatternBtn', 'click', addPattern);
+        bind('clearPatternsBtn', 'click', clearAllPatterns);
+        bind('mobileClearPatternsBtn', 'click', clearAllPatterns);
+        bind('applySplitBtn', 'click', applySplitToNovel);
+        bind('mobileApplySplitBtn', 'click', () => { applySplitToNovel(); closeSheet(); });
+        
         const handleUpload = async (e) => {
             if (e.target.files.length) {
-                const regex = prompt("Chapter regex (leave empty for default):", chapterSplitRegex);
-                if (regex !== null && regex.trim()) chapterSplitRegex = regex;
                 try {
                     await importNovel(e.target.files[0], chapterSplitRegex);
                 } catch(err) { showToast(`Error: ${err.message}`); }
@@ -959,6 +1504,8 @@
                 document.getElementById('splitDialog').classList.remove('show');
             }
         });
+        
+        updateSplitPreview();
     };
 </script>
 </body>
